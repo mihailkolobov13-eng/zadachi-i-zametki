@@ -124,7 +124,8 @@
   .task.overdue { box-shadow: inset 4px 0 0 var(--danger); }
 
   .meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 5px; }
-  .tag { background: var(--tag-bg); color: var(--tag-text); border-radius: 10px; padding: 1px 9px; }
+  .tag { background: var(--tag-bg); color: var(--tag-text); border-radius: 10px; padding: 1px 9px; cursor: pointer; }
+  .tag:hover { text-decoration: underline; }
   .due { border-radius: 10px; padding: 1px 9px; border: 1px solid var(--line); color: var(--text); }
   .due.today { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
   .due.late { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); font-weight: 600; }
@@ -140,7 +141,29 @@
   .sheet input[type=text], .sheet textarea { width: 100%; display: block; margin-bottom: 10px; }
   #title { font-size: 20px; font-weight: 600; }
   #text { min-height: 160px; resize: vertical; }
-  .sheet label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .sheet label, .sheet .label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+  /* Хэштеги в окне */
+  .tagchips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  #selTags { display: contents; }
+  .chip { display: inline-flex; align-items: center; background: var(--tag-bg); color: var(--tag-text); border-radius: 16px; padding: 4px 2px 4px 12px; font-size: 15px; }
+  .chip button { background: transparent; color: inherit; border: none; padding: 0 8px; font-size: 18px; line-height: 1; border-radius: 12px; }
+  .chip button:hover { background: rgba(0, 0, 0, .08); }
+  #addTagBtn { background: transparent; border: 1px dashed var(--field-line); color: var(--muted); border-radius: 16px; padding: 5px 14px; font-size: 15px; }
+  #addTagBtn:hover { color: var(--text); border-color: var(--accent); }
+  .taginput { display: none; align-items: center; border: 1px solid var(--accent); border-radius: 16px; padding: 0 6px 0 12px; background: var(--field); }
+  .taginput span { color: var(--muted); }
+  .sheet .taginput input { border: none; background: transparent; padding: 6px 4px; width: 170px; margin: 0; display: inline-block; }
+  .sheet .taginput input:focus { outline: none; }
+  #tagSuggest { display: none; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+  #tagSuggest .group { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 2px 0 6px; }
+  #tagSuggest .opts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  #tagSuggest .opts:last-child { margin-bottom: 0; }
+  #tagSuggest button { background: var(--field); border: 1px solid var(--line); color: var(--text); border-radius: 16px; padding: 4px 12px; font-size: 14px; }
+  #tagSuggest button:hover { border-color: var(--accent); }
+  #tagSuggest button.new { border-style: dashed; color: var(--muted); }
+  #tagSuggest b { color: var(--tag-text); background: var(--tag-bg); border-radius: 3px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
   #dueWrap { margin-bottom: 10px; }
   #error { color: var(--danger); font-size: 14px; margin: -4px 0 10px; display: none; }
   .sheet-foot { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
@@ -180,7 +203,7 @@
   <!-- Поиск, категории, сортировка -->
   <div class="tools">
     <input type="text" id="search" placeholder="Поиск" aria-label="Поиск">
-    <select id="catFilter" aria-label="Категория"><option value="">Все категории</option></select>
+    <select id="catFilter" aria-label="Хэштег"><option value="">Все хэштеги</option></select>
     <select id="sort" aria-label="Сортировка">
       <option value="new">Сначала новые</option>
       <option value="old">Сначала старые</option>
@@ -215,9 +238,13 @@
     <input type="text" id="title" placeholder="Заголовок" maxlength="120" aria-label="Заголовок">
     <div id="error">Введите заголовок.</div>
     <textarea id="text" placeholder="Текст" aria-label="Текст"></textarea>
-    <label for="category">Категория</label>
-    <input type="text" id="category" list="cats" placeholder="Например, «Учёба»" maxlength="40">
-    <datalist id="cats"></datalist>
+    <div class="label">Хэштеги</div>
+    <div class="tagchips">
+      <span id="selTags"></span>
+      <button type="button" id="addTagBtn">+ Добавить хэштег</button>
+      <span class="taginput" id="tagInputWrap"><span>#</span><input type="text" id="tagInput" maxlength="30" placeholder="хэштег" aria-label="Новый хэштег" autocomplete="off"></span>
+    </div>
+    <div id="tagSuggest"></div>
     <div id="dueWrap">
       <label for="due">Срок выполнения</label>
       <input type="date" id="due">
@@ -238,8 +265,9 @@
   // ====== 1. ДАННЫЕ ======
   // Все записи лежат в массиве items. Одна запись выглядит так:
   // { id: 1731580000000, type: 'note' или 'task', title: '...', text: '...',
-  //   category: '...', done: false, created: '14.11.2026', due: '2026-11-20' }
+  //   tags: ['учёба', 'важное'], done: false, created: '14.11.2026', due: '2026-11-20' }
   // due (срок) есть только у задач; пустая строка — срока нет.
+  // В старых версиях вместо tags было одно поле category — его переводим в хэштег.
 
   var KEY = 'notes_tasks_v1';          // записи
   var SORT_KEY = 'notes_tasks_sort';   // выбранная сортировка
@@ -251,7 +279,8 @@
   function load() {
     try {
       var saved = JSON.parse(localStorage.getItem(KEY));
-      return Array.isArray(saved) ? saved : [];
+      if (!Array.isArray(saved)) return [];
+      return saved.filter(function (x) { return x && typeof x === 'object'; }).map(upgrade);
     } catch (e) {
       return [];
     }
@@ -282,6 +311,40 @@
   var editType = 'note';   // что создаём в окне: заметку или задачу
 
   function el(id) { return document.getElementById(id); }
+
+  // ====== ХЭШТЕГИ ======
+  // Готовые хэштеги, которые предлагаются, пока своих мало
+  var BASE_TAGS = ['учёба', 'работа', 'дом', 'спорт', 'покупки', 'идеи', 'важное', 'личное'];
+  var MAX_TAGS = 10;     // не больше 10 хэштегов у одной записи
+  var editTags = [];     // хэштеги записи в открытом окне
+  var tagInputOpen = false;
+
+  // Приводим хэштег к одному виду: без #, маленькими буквами, пробелы -> _
+  function cleanTag(s) {
+    return String(s).trim().replace(/^#+/, '').toLowerCase()
+      .replace(/\s+/g, '_').replace(/[^0-9a-zа-яё_-]/gi, '').slice(0, 30);
+  }
+
+  // Запись из старой версии: категорию превращаем в хэштег
+  function upgrade(x) {
+    if (!Array.isArray(x.tags)) {
+      var t = x.category ? cleanTag(x.category) : '';
+      x.tags = t ? [t] : [];
+    }
+    delete x.category;
+    if (typeof x.text !== 'string') x.text = '';
+    if (typeof x.title !== 'string') x.title = String(x.title || '');
+    return x;
+  }
+
+  // Хэштеги, которые уже использовались: сначала недавние
+  function usedTags() {
+    var last = {};
+    items.forEach(function (x) {
+      x.tags.forEach(function (t) { if (!last[t] || x.id > last[t]) last[t] = x.id; });
+    });
+    return Object.keys(last).sort(function (a, b) { return last[b] - last[a]; });
+  }
 
   // Превращаем спецсимволы в безопасный текст, чтобы запись не могла сломать страницу
   function esc(s) {
@@ -328,7 +391,8 @@
     el('edTitle').textContent = item ? (isTask ? 'Задача' : 'Заметка') : (isTask ? 'Новая задача' : 'Новая заметка');
     el('title').value = item ? item.title : '';
     el('text').value = item ? item.text : '';
-    el('category').value = item ? item.category : '';
+    editTags = item ? item.tags.slice() : (el('catFilter').value ? [el('catFilter').value] : []);
+    closeTagInput();
     el('due').value = item && item.due ? item.due : '';
     el('dueWrap').style.display = isTask ? 'block' : 'none';
     el('deleteBtn').style.display = item ? '' : 'none';
@@ -344,6 +408,81 @@
     el('editor').classList.remove('open');
     document.body.style.overflow = '';
     editId = null;
+    tagInputOpen = false;
+  }
+
+  // --- хэштеги в окне ---
+
+  // Показываем выбранные хэштеги, кнопку «Добавить» или поле ввода
+  function renderTagEditor() {
+    el('selTags').innerHTML = editTags.map(function (t) {
+      return '<span class="chip">#' + esc(t) + '<button type="button" data-rm="' + esc(t) + '" aria-label="Убрать #' + esc(t) + '">×</button></span>';
+    }).join('');
+    var full = editTags.length >= MAX_TAGS;
+    el('addTagBtn').style.display = tagInputOpen || full ? 'none' : '';
+    el('tagInputWrap').style.display = tagInputOpen && !full ? 'inline-flex' : 'none';
+    renderSuggest();
+  }
+
+  // Подсказки: пустое поле — недавние и базовые; есть буквы — подходящие по началу
+  function renderSuggest() {
+    var box = el('tagSuggest');
+    if (!tagInputOpen || editTags.length >= MAX_TAGS) { box.style.display = 'none'; return; }
+    var q = cleanTag(el('tagInput').value);
+    var free = function (t) { return editTags.indexOf(t) === -1; };
+    var btn = function (t, label, cls) {
+      return '<button type="button" data-tag="' + esc(t) + '"' + (cls ? ' class="' + cls + '"' : '') + '>' + label + '</button>';
+    };
+    var html = '';
+
+    if (!q) {
+      var recent = usedTags().filter(free).slice(0, 8);
+      var base = BASE_TAGS.filter(function (t) { return free(t) && recent.indexOf(t) === -1; });
+      if (recent.length) html += '<div class="group">Вы использовали</div><div class="opts">' + recent.map(function (t) { return btn(t, '#' + esc(t)); }).join('') + '</div>';
+      if (base.length) html += '<div class="group">Популярные</div><div class="opts">' + base.map(function (t) { return btn(t, '#' + esc(t)); }).join('') + '</div>';
+    } else {
+      var all = usedTags();
+      BASE_TAGS.forEach(function (t) { if (all.indexOf(t) === -1) all.push(t); });
+      all = all.filter(free);
+      var starts = all.filter(function (t) { return t.indexOf(q) === 0; });
+      var inside = all.filter(function (t) { return t.indexOf(q) > 0; });
+      var found = starts.concat(inside).slice(0, 8);
+      var opts = found.map(function (t) {
+        var i = t.indexOf(q);
+        return btn(t, '#' + esc(t.slice(0, i)) + '<b>' + esc(t.slice(i, i + q.length)) + '</b>' + esc(t.slice(i + q.length)));
+      });
+      if (found.indexOf(q) === -1 && free(q)) opts.push(btn(q, '+ новый #' + esc(q), 'new'));
+      if (opts.length) html += '<div class="group">' + (found.length ? 'Подходят' : 'Такого ещё нет') + '</div><div class="opts">' + opts.join('') + '</div>';
+    }
+    box.innerHTML = html;
+    box.style.display = html ? 'block' : 'none';
+  }
+
+  function openTagInput() {
+    tagInputOpen = true;
+    el('tagInput').value = '';
+    renderTagEditor();
+    el('tagInput').focus();
+  }
+
+  function closeTagInput() {
+    tagInputOpen = false;
+    el('tagInput').value = '';
+    renderTagEditor();
+  }
+
+  function addTag(raw) {
+    var t = cleanTag(raw);
+    if (t && editTags.indexOf(t) === -1 && editTags.length < MAX_TAGS) editTags.push(t);
+    if (editTags.length >= MAX_TAGS) tagInputOpen = false;   // больше добавить нельзя
+    el('tagInput').value = '';
+    renderTagEditor();
+    if (tagInputOpen && editTags.length < MAX_TAGS) el('tagInput').focus();
+  }
+
+  function removeTag(t) {
+    editTags = editTags.filter(function (x) { return x !== t; });
+    renderTagEditor();
   }
 
   // Кнопка «Сохранить»
@@ -354,10 +493,11 @@
       el('title').focus();
       return;
     }
+    if (el('tagInput').value.trim()) addTag(el('tagInput').value);   // не забываем недописанный хэштег
     var data = {
       title: title,
       text: el('text').value.trim(),
-      category: el('category').value.trim(),
+      tags: editTags.slice(),
       due: editType === 'task' ? el('due').value : ''
     };
 
@@ -366,7 +506,7 @@
       if (item) {
         item.title = data.title;
         item.text = data.text;
-        item.category = data.category;
+        item.tags = data.tags;
         item.due = data.due;
       }
     } else {
@@ -375,7 +515,7 @@
         type: editType,
         title: data.title,
         text: data.text,
-        category: data.category,
+        tags: data.tags,
         done: false,
         created: new Date().toLocaleDateString('ru-RU'),
         due: data.due
@@ -408,23 +548,18 @@
 
   // ====== 4. ОТБОР И СОРТИРОВКА ======
 
-  // Категории записей открытой вкладки — для фильтра; всех записей — для подсказки в окне
+  // Хэштеги записей открытой вкладки — для фильтра
   function updateCategories() {
-    function collect(list) {
-      var cats = [];
-      list.forEach(function (x) {
-        if (x.category && cats.indexOf(x.category) === -1) cats.push(x.category);
-      });
-      return cats.sort(function (a, b) { return a.localeCompare(b, 'ru'); });
-    }
-    var all = collect(items);
-    var mine = collect(items.filter(function (x) { return x.type === tab; }));
-
-    el('cats').innerHTML = all.map(function (c) { return '<option value="' + esc(c) + '">'; }).join('');
+    var mine = [];
+    items.forEach(function (x) {
+      if (x.type !== tab) return;
+      x.tags.forEach(function (t) { if (mine.indexOf(t) === -1) mine.push(t); });
+    });
+    mine.sort(function (a, b) { return a.localeCompare(b, 'ru'); });
 
     var chosen = el('catFilter').value;
-    el('catFilter').innerHTML = '<option value="">Все категории</option>' + mine.map(function (c) {
-      return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
+    el('catFilter').innerHTML = '<option value="">Все хэштеги</option>' + mine.map(function (c) {
+      return '<option value="' + esc(c) + '">#' + esc(c) + '</option>';
     }).join('');
     el('catFilter').value = mine.indexOf(chosen) === -1 ? '' : chosen;
   }
@@ -437,9 +572,10 @@
       if (taskFilter === 'late' && !isLate(x)) return false;
     }
     var cat = el('catFilter').value;
-    if (cat && x.category !== cat) return false;
+    if (cat && x.tags.indexOf(cat) === -1) return false;
     var q = el('search').value.trim().toLowerCase();
-    if (q && (x.title + ' ' + x.text).toLowerCase().indexOf(q) === -1) return false;
+    var where = x.title + ' ' + x.text + ' #' + x.tags.join(' #');
+    if (q && where.toLowerCase().indexOf(q) === -1) return false;
     return true;
   }
 
@@ -458,12 +594,18 @@
 
   // ====== 5. ВЫВОД НА СТРАНИЦУ ======
 
+  // Хэштеги на карточке; нажатие на хэштег показывает все записи с ним
+  function tagsHtml(x) {
+    return x.tags.map(function (t) {
+      return '<span class="tag" data-tag="' + esc(t) + '" title="Показать все с #' + esc(t) + '">#' + esc(t) + '</span>';
+    }).join('');
+  }
+
   function noteHtml(x) {
     var html = '<div class="card" tabindex="0" role="button" data-id="' + x.id + '">';
     html += '<div class="title">' + esc(x.title) + '</div>';
     if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
-    html += '<div class="meta"><span>' + esc(x.created || '') + '</span>';
-    if (x.category) html += '<span class="tag">' + esc(x.category) + '</span>';
+    html += '<div class="meta"><span>' + esc(x.created || '') + '</span>' + tagsHtml(x);
     html += '</div></div>';
     return html;
   }
@@ -474,8 +616,7 @@
     html += '<input type="checkbox" aria-label="Выполнено" title="Отметить выполненной"' + (x.done ? ' checked' : '') + '>';
     html += '<div class="body"><div class="title">' + esc(x.title) + '</div>';
     if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
-    html += '<div class="meta">';
-    if (x.category) html += '<span class="tag">' + esc(x.category) + '</span>';
+    html += '<div class="meta">' + tagsHtml(x);
     if (x.due) {
       if (late) html += '<span class="due late">Просрочено: ' + showDate(x.due) + '</span>';
       else if (!x.done && x.due === todayStr()) html += '<span class="due today">Срок сегодня</span>';
@@ -569,6 +710,12 @@
 
   // Нажатие на заметку или задачу открывает её; галочка — отмечает выполнение
   el('list').addEventListener('click', function (e) {
+    var tagEl = e.target.closest('.tag[data-tag]');
+    if (tagEl) {
+      el('catFilter').value = tagEl.getAttribute('data-tag');
+      render();
+      return;
+    }
     var box = e.target.closest('[data-id]');
     if (!box) return;
     var id = Number(box.getAttribute('data-id'));
@@ -589,6 +736,39 @@
   el('title').oninput = function () { el('error').style.display = 'none'; };
   el('title').onkeydown = function (e) { if (e.key === 'Enter') saveEditor(); };
   el('editor').addEventListener('click', function (e) { if (e.target === el('editor')) closeEditor(); });
+
+  // хэштеги в окне
+  el('addTagBtn').onclick = openTagInput;
+  el('tagInput').oninput = renderSuggest;
+  el('tagInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      if (el('tagInput').value.trim()) addTag(el('tagInput').value); else closeTagInput();
+    } else if (e.key === 'Backspace' && !el('tagInput').value && editTags.length) {
+      removeTag(editTags[editTags.length - 1]);
+    } else if (e.key === 'Escape') {
+      e.stopPropagation();   // Esc закрывает только поле хэштега, а не всё окно
+      closeTagInput();
+      el('addTagBtn').focus();
+    }
+  });
+  el('tagInput').addEventListener('blur', function () {
+    setTimeout(function () {
+      if (!tagInputOpen || document.activeElement === el('tagInput')) return;
+      if (el('tagInput').value.trim()) addTag(el('tagInput').value);
+      closeTagInput();
+    }, 150);
+  });
+  // нажатие на подсказку не должно уводить курсор из поля
+  el('tagSuggest').addEventListener('mousedown', function (e) { e.preventDefault(); });
+  el('tagSuggest').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tag]');
+    if (b) addTag(b.getAttribute('data-tag'));
+  });
+  el('selTags').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-rm]');
+    if (b) removeTag(b.getAttribute('data-rm'));
+  });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && el('editor').classList.contains('open')) closeEditor();
   });
