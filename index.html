@@ -166,6 +166,29 @@
   #tagSuggest .group + .hint, #tagSuggest > .hint:first-child { margin-top: 0; }
   #tagSuggest b { color: var(--tag-text); background: var(--tag-bg); border-radius: 3px; }
   .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* Пункты задачи в окне */
+  #subWrap { margin-bottom: 12px; }
+  .subrow { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .subrow input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+  .sheet .subrow input[type=text] { margin: 0; flex: 1; padding: 8px 10px; }
+  .subrow.done input[type=text] { text-decoration: line-through; color: var(--muted); }
+  .subrow .rm { background: transparent; color: var(--muted); border: none; padding: 4px 8px; font-size: 20px; line-height: 1; }
+  .subrow .rm:hover { color: var(--danger); }
+  #addSubBtn { background: transparent; border: 1px dashed var(--field-line); color: var(--muted); border-radius: 10px; padding: 7px 14px; font-size: 15px; }
+  #addSubBtn:hover { color: var(--text); border-color: var(--accent); }
+  .quick { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .quick button { background: var(--field); border: 1px solid var(--line); color: var(--text); border-radius: 16px; padding: 5px 12px; font-size: 14px; }
+  .quick button:hover { border-color: var(--accent); }
+  .sheet .quick input[type=date] { margin: 0; }
+
+  /* Пункты задачи в списке */
+  .subs { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .sub { display: flex; gap: 9px; align-items: center; font-size: 15px; cursor: pointer; width: fit-content; max-width: 100%; }
+  .sub input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  .sub span { overflow-wrap: anywhere; }
+  .sub.done span { text-decoration: line-through; color: var(--muted); }
+  .more { font-size: 13px; color: var(--muted); }
   #dueWrap { margin-bottom: 10px; }
   #error { color: var(--danger); font-size: 14px; margin: -4px 0 10px; display: none; }
   .sheet-foot { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
@@ -240,6 +263,20 @@
     <input type="text" id="title" placeholder="Заголовок" maxlength="120" aria-label="Заголовок">
     <div id="error">Введите заголовок.</div>
     <textarea id="text" placeholder="Текст" aria-label="Текст"></textarea>
+    <!-- Пункты задачи (например, список покупок) -->
+    <div id="subWrap">
+      <div id="subList"></div>
+      <button type="button" id="addSubBtn">+ Добавить пункт</button>
+    </div>
+    <div id="dueWrap">
+      <label for="due">Срок</label>
+      <div class="quick">
+        <input type="date" id="due">
+        <button type="button" data-due="0">Сегодня</button>
+        <button type="button" data-due="1">Завтра</button>
+        <button type="button" data-due="">Без срока</button>
+      </div>
+    </div>
     <div class="label">Хэштеги</div>
     <div class="tagchips">
       <span id="selTags"></span>
@@ -247,10 +284,6 @@
       <span class="taginput" id="tagInputWrap"><span>#</span><input type="text" id="tagInput" maxlength="30" placeholder="хэштег" aria-label="Новый хэштег" autocomplete="off"></span>
     </div>
     <div id="tagSuggest"></div>
-    <div id="dueWrap">
-      <label for="due">Срок выполнения</label>
-      <input type="date" id="due">
-    </div>
     <div class="sheet-foot">
       <button type="button" id="saveBtn">Сохранить</button>
       <button type="button" id="deleteBtn">Удалить</button>
@@ -267,7 +300,9 @@
   // ====== 1. ДАННЫЕ ======
   // Все записи лежат в массиве items. Одна запись выглядит так:
   // { id: 1731580000000, type: 'note' или 'task', title: '...', text: '...',
-  //   tags: ['учёба', 'важное'], done: false, created: '14.11.2026', due: '2026-11-20' }
+  //   tags: ['учёба', 'важное'], done: false, created: '14.11.2026', due: '2026-11-20',
+  //   subtasks: [{ text: 'апельсин', done: true }, { text: 'арбуз', done: false }] }
+  // subtasks (пункты) бывают только у задач.
   // due (срок) есть только у задач; пустая строка — срока нет.
   // В старых версиях вместо tags было одно поле category — его переводим в хэштег.
 
@@ -311,6 +346,7 @@
   var taskFilter = 'all';  // фильтр задач
   var editId = null;       // id записи в окне (null — новая запись)
   var editType = 'note';   // что создаём в окне: заметку или задачу
+  var editSubs = [];       // пункты задачи в открытом окне
 
   function el(id) { return document.getElementById(id); }
 
@@ -355,6 +391,15 @@
     delete x.category;
     if (typeof x.text !== 'string') x.text = '';
     if (typeof x.title !== 'string') x.title = String(x.title || '');
+    if (!Array.isArray(x.subtasks)) x.subtasks = [];
+    x.subtasks = x.subtasks.filter(function (s) { return s && typeof s.text === 'string'; })
+      .map(function (s) { return { text: s.text, done: !!s.done }; });
+    // У задач из старых версий был текст: превращаем его строки в пункты
+    if (x.type === 'task' && x.text && !x.subtasks.length) {
+      x.subtasks = x.text.split('\n').map(function (t) { return t.trim(); }).filter(Boolean)
+        .map(function (t) { return { text: t, done: !!x.done }; });
+      x.text = '';
+    }
     return x;
   }
 
@@ -415,7 +460,12 @@
 
     el('edTitle').textContent = item ? (isTask ? 'Задача' : 'Заметка') : (isTask ? 'Новая задача' : 'Новая заметка');
     el('title').value = item ? item.title : '';
+    el('title').placeholder = isTask ? 'Что нужно сделать?' : 'Заголовок';
     el('text').value = item ? item.text : '';
+    el('text').style.display = isTask ? 'none' : 'block';
+    el('subWrap').style.display = isTask ? 'block' : 'none';
+    editSubs = item ? item.subtasks.map(function (s) { return { text: s.text, done: s.done }; }) : [];
+    renderSubs();
     editTags = item ? item.tags.slice() : (el('catFilter').value ? [el('catFilter').value] : []);
     closeTagInput();
     el('due').value = item && item.due ? item.due : '';
@@ -434,6 +484,35 @@
     document.body.style.overflow = '';
     editId = null;
     tagInputOpen = false;
+  }
+
+  // --- пункты задачи в окне ---
+
+  function renderSubs() {
+    el('subList').innerHTML = editSubs.map(function (s, i) {
+      return '<div class="subrow' + (s.done ? ' done' : '') + '" data-i="' + i + '">' +
+        '<input type="checkbox" aria-label="Пункт выполнен"' + (s.done ? ' checked' : '') + '>' +
+        '<input type="text" maxlength="120" placeholder="Пункт" aria-label="Пункт" value="' + esc(s.text) + '">' +
+        '<button type="button" class="rm" aria-label="Убрать пункт">×</button></div>';
+    }).join('');
+  }
+
+  function focusSub(i) {
+    var inputs = el('subList').querySelectorAll('input[type=text]');
+    if (inputs[i]) inputs[i].focus();
+  }
+
+  // Новый пункт после пункта номер i (i = -1 — в самое начало)
+  function addSub(i) {
+    editSubs.splice(i + 1, 0, { text: '', done: false });
+    renderSubs();
+    focusSub(i + 1);
+  }
+
+  function removeSub(i) {
+    editSubs.splice(i, 1);
+    renderSubs();
+    if (i > 0) focusSub(i - 1); else el('title').focus();
   }
 
   // --- хэштеги в окне ---
@@ -525,9 +604,14 @@
       return;
     }
     if (el('tagInput').value.trim()) addTag(el('tagInput').value);   // не забываем недописанный хэштег
+    var isTask = editType === 'task';
+    var subs = isTask ? editSubs.filter(function (s) { return s.text.trim(); })
+      .map(function (s) { return { text: s.text.trim(), done: s.done }; }) : [];
+    var allDone = subs.length > 0 && subs.every(function (s) { return s.done; });
     var data = {
       title: title,
-      text: el('text').value.trim(),
+      text: isTask ? '' : el('text').value.trim(),
+      subtasks: subs,
       tags: editTags.slice(),
       due: editType === 'task' ? el('due').value : ''
     };
@@ -539,6 +623,8 @@
         item.text = data.text;
         item.tags = data.tags;
         item.due = data.due;
+        item.subtasks = data.subtasks;
+        if (subs.length) item.done = allDone;   // все пункты отмечены — задача выполнена
       }
     } else {
       items.unshift({
@@ -547,7 +633,8 @@
         title: data.title,
         text: data.text,
         tags: data.tags,
-        done: false,
+        subtasks: data.subtasks,
+        done: allDone,
         created: new Date().toLocaleDateString('ru-RU'),
         due: data.due
       });
@@ -569,10 +656,22 @@
     render();
   }
 
-  // Галочка у задачи
+  // Галочка у задачи: отмечает и все её пункты
   function toggleDone(id) {
     var item = findItem(id);
-    if (item) item.done = !item.done;
+    if (!item) return;
+    item.done = !item.done;
+    item.subtasks.forEach(function (s) { s.done = item.done; });
+    save();
+    render();
+  }
+
+  // Галочка у пункта прямо в списке; все пункты отмечены — задача выполнена
+  function toggleSub(id, i) {
+    var item = findItem(id);
+    if (!item || !item.subtasks[i]) return;
+    item.subtasks[i].done = !item.subtasks[i].done;
+    item.done = item.subtasks.every(function (s) { return s.done; });
     save();
     render();
   }
@@ -605,7 +704,7 @@
     var cat = el('catFilter').value;
     if (cat && x.tags.indexOf(cat) === -1) return false;
     var q = el('search').value.trim().toLowerCase();
-    var where = x.title + ' ' + x.text + ' #' + x.tags.join(' #');
+    var where = x.title + ' ' + x.text + ' ' + x.subtasks.map(function (s) { return s.text; }).join(' ') + ' #' + x.tags.join(' #');
     if (q && where.toLowerCase().indexOf(q) === -1) return false;
     return true;
   }
@@ -644,10 +743,22 @@
   function taskHtml(x) {
     var late = isLate(x);
     var html = '<div class="task' + (x.done ? ' done' : '') + (late ? ' overdue' : '') + '" tabindex="0" role="button" data-id="' + x.id + '">';
-    html += '<input type="checkbox" aria-label="Выполнено" title="Отметить выполненной"' + (x.done ? ' checked' : '') + '>';
+    html += '<input type="checkbox" class="main" aria-label="Выполнено" title="Отметить выполненной"' + (x.done ? ' checked' : '') + '>';
     html += '<div class="body"><div class="title">' + esc(x.title) + '</div>';
     if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
-    html += '<div class="meta">' + tagsHtml(x);
+    if (x.subtasks.length) {
+      var SHOW = 6;
+      html += '<ul class="subs">' + x.subtasks.slice(0, SHOW).map(function (s, i) {
+        return '<li><label class="sub' + (s.done ? ' done' : '') + '"><input type="checkbox" data-sub="' + i + '"' + (s.done ? ' checked' : '') + '><span>' + esc(s.text) + '</span></label></li>';
+      }).join('') + '</ul>';
+      if (x.subtasks.length > SHOW) html += '<div class="more">и ещё ' + (x.subtasks.length - SHOW) + '…</div>';
+    }
+    html += '<div class="meta">';
+    if (x.subtasks.length) {
+      var ready = x.subtasks.filter(function (s) { return s.done; }).length;
+      html += '<span>' + ready + ' из ' + x.subtasks.length + '</span>';
+    }
+    html += tagsHtml(x);
     if (x.due) {
       if (late) html += '<span class="due late">Просрочено: ' + showDate(x.due) + '</span>';
       else if (!x.done && x.due === todayStr()) html += '<span class="due today">Срок сегодня</span>';
@@ -750,7 +861,12 @@
     var box = e.target.closest('[data-id]');
     if (!box) return;
     var id = Number(box.getAttribute('data-id'));
-    if (e.target.matches('input[type=checkbox]')) { toggleDone(id); return; }
+    // пункт задачи: галочку обрабатываем, саму задачу не открываем
+    if (e.target.closest('.sub')) {
+      if (e.target.matches('input[data-sub]')) toggleSub(id, Number(e.target.getAttribute('data-sub')));
+      return;
+    }
+    if (e.target.matches('input.main')) { toggleDone(id); return; }
     openEditor(id);
   });
   el('list').addEventListener('keydown', function (e) {
@@ -765,7 +881,57 @@
   el('yesDel').onclick = removeItem;
   el('noDel').onclick = function () { el('confirm').style.display = 'none'; };
   el('title').oninput = function () { el('error').style.display = 'none'; };
-  el('title').onkeydown = function (e) { if (e.key === 'Enter') saveEditor(); };
+  // Enter в заголовке: у заметки — сохранить, у задачи — перейти к пунктам
+  el('title').onkeydown = function (e) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (editType === 'task') {
+      if (editSubs.length) focusSub(0); else addSub(-1);
+    } else {
+      saveEditor();
+    }
+  };
+
+  // пункты задачи
+  el('addSubBtn').onclick = function () { addSub(editSubs.length - 1); };
+  el('subList').addEventListener('input', function (e) {
+    var row = e.target.closest('.subrow');
+    if (row && e.target.type === 'text') editSubs[Number(row.getAttribute('data-i'))].text = e.target.value;
+  });
+  el('subList').addEventListener('change', function (e) {
+    var row = e.target.closest('.subrow');
+    if (row && e.target.type === 'checkbox') {
+      editSubs[Number(row.getAttribute('data-i'))].done = e.target.checked;
+      row.classList.toggle('done', e.target.checked);
+    }
+  });
+  el('subList').addEventListener('click', function (e) {
+    var row = e.target.closest('.subrow');
+    if (row && e.target.classList.contains('rm')) removeSub(Number(row.getAttribute('data-i')));
+  });
+  el('subList').addEventListener('keydown', function (e) {
+    var row = e.target.closest('.subrow');
+    if (!row || e.target.type !== 'text') return;
+    var i = Number(row.getAttribute('data-i'));
+    if (e.key === 'Enter') {           // Enter — следующий пункт
+      e.preventDefault();
+      addSub(i);
+    } else if (e.key === 'Backspace' && !e.target.value) {   // стёрли пустой пункт
+      e.preventDefault();
+      removeSub(i);
+    }
+  });
+
+  // быстрый выбор срока
+  document.querySelectorAll('#dueWrap .quick button').forEach(function (b) {
+    b.onclick = function () {
+      var days = b.getAttribute('data-due');
+      if (days === '') { el('due').value = ''; return; }
+      var d = new Date();
+      d.setDate(d.getDate() + Number(days));
+      el('due').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    };
+  });
   el('editor').addEventListener('click', function (e) { if (e.target === el('editor')) closeEditor(); });
 
   // хэштеги в окне
