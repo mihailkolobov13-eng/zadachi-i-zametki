@@ -18,49 +18,43 @@
 <style>
   /* ---------- Цвета светлой и тёмной темы ---------- */
   :root {
-    --bg: #eef1f5;
+    --bg: #f3f3f3;
     --card: #ffffff;
-    --card-soft: #f6f8fa;
-    --text: #1d2733;
-    --muted: #5f6b76;
-    --line: #d7dee5;
+    --card-hover: #fafafa;
+    --text: #1c1c1c;
+    --muted: #6b6b6b;
+    --line: #e2e2e2;
     --field: #ffffff;
-    --field-line: #b9c3cd;
-    --accent: #177e7e;
-    --accent-hover: #126767;
-    --accent-soft: #e0efef;
-    --accent-text: #135f5f;
-    --task: #d9822b;
-    --danger: #b3261e;
-    --danger-soft: #fdeeed;
-    --warn: #b86a00;
+    --field-line: #c9c9c9;
+    --accent: #f2b200;        /* жёлтый, как в заметках Xiaomi */
+    --accent-hover: #ffc21a;
+    --on-accent: #1c1c1c;     /* текст на жёлтом */
+    --tag-bg: #fff3cc;
+    --tag-text: #6b4e00;
+    --danger: #c62828;
+    --danger-soft: #fdecea;
+    --warn: #a35f00;
     --warn-soft: #fff1dc;
-    --head: #1f2c38;
-    --head-text: #ffffff;
-    --head-muted: #b9c6d2;
-    --shadow: 0 1px 2px rgba(20, 30, 40, .06);
+    --shadow: 0 1px 3px rgba(0, 0, 0, .07);
   }
   [data-theme="dark"] {
-    --bg: #12171d;
-    --card: #1b232b;
-    --card-soft: #171e25;
-    --text: #e3e9ef;
-    --muted: #93a1ae;
-    --line: #2c3742;
-    --field: #141b22;
-    --field-line: #3a4754;
-    --accent: #1a7d7d;
-    --accent-hover: #208d8d;
-    --accent-soft: #19393b;
-    --accent-text: #7fd3d3;
-    --task: #e39a4c;
-    --danger: #f07b72;
-    --danger-soft: #3a2022;
-    --warn: #f0b45a;
-    --warn-soft: #3a2d17;
-    --head: #0d1217;
-    --head-text: #e3e9ef;
-    --head-muted: #8d9ba8;
+    --bg: #000000;
+    --card: #1e1e1e;
+    --card-hover: #262626;
+    --text: #ededed;
+    --muted: #9a9a9a;
+    --line: #2e2e2e;
+    --field: #141414;
+    --field-line: #3d3d3d;
+    --accent: #f5bd00;
+    --accent-hover: #ffcb2e;
+    --on-accent: #1c1c1c;
+    --tag-bg: #3a3215;
+    --tag-text: #f2d374;
+    --danger: #ff7b72;
+    --danger-soft: #3a1d1c;
+    --warn: #f3b552;
+    --warn-soft: #3a2c14;
     --shadow: none;
     color-scheme: dark;
   }
@@ -74,159 +68,171 @@
     color: var(--text);
     background: var(--bg);
   }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 0 16px; }
-  header { background: var(--head); color: var(--head-text); }
-  header .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 14px; padding-bottom: 14px; }
-  h1 { margin: 0; font-size: 22px; font-weight: 600; }
-  #counter { font-size: 14px; color: var(--head-muted); margin-top: 2px; }
-  #counter span { white-space: nowrap; }
-  #themeBtn { background: transparent; color: var(--head-text); border: 1px solid var(--head-muted); }
-  #themeBtn:hover { background: rgba(255, 255, 255, .08); }
-  main.wrap { padding-top: 20px; padding-bottom: 48px; }
-
-  /* ---------- Белые блоки ---------- */
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow); }
-  .panel h2 { margin: 0 0 14px; font-size: 17px; font-weight: 600; }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
-  .row:last-child { margin-bottom: 0; }
-  label.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); flex: 1; min-width: 170px; }
-
-  /* ---------- Поля и кнопки ---------- */
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 16px; }
+  button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid transparent; padding: 9px 16px; }
   input[type=text], input[type=date], select, textarea {
-    font: inherit; padding: 9px 11px; border: 1px solid var(--field-line); border-radius: 8px;
+    font: inherit; padding: 10px 12px; border: 1px solid var(--field-line); border-radius: 10px;
     background: var(--field); color: var(--text);
   }
-  input[type=text], select { flex: 1; min-width: 170px; }
-  textarea { width: 100%; min-height: 72px; resize: vertical; display: block; }
-  input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  button { font: inherit; padding: 9px 16px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; }
-  .btn-main { background: var(--accent); color: #fff; font-weight: 600; }
-  .btn-main:hover { background: var(--accent-hover); }
-  .btn-plain { background: var(--card); border-color: var(--field-line); color: var(--text); }
-  .btn-plain:hover { background: var(--card-soft); }
-  .btn-danger { background: var(--card); border-color: var(--danger); color: var(--danger); }
-  .btn-danger:hover { background: var(--danger-soft); }
-  .btn-danger-full { background: var(--danger); color: #fff; }
-  .small { padding: 5px 12px; font-size: 14px; }
+  input:focus, select:focus, textarea:focus, button:focus-visible, .card:focus-visible, .task:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
 
-  /* Переключатель «Заметка / Задача» */
-  .switch { display: inline-flex; border: 1px solid var(--field-line); border-radius: 8px; overflow: hidden; }
-  .switch button { border: none; border-radius: 0; background: var(--card); color: var(--text); }
-  .switch button + button { border-left: 1px solid var(--field-line); }
-  .switch button.active { background: var(--head); color: var(--head-text); }
-  [data-theme="dark"] .switch button.active { background: var(--accent); color: #fff; }
+  /* ---------- Шапка и вкладки ---------- */
+  .top { padding-top: 18px; }
+  .toprow { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  h1 { margin: 0; font-size: 30px; font-weight: 600; }
+  #themeBtn { background: transparent; border: 1px solid var(--field-line); color: var(--text); padding: 7px 12px; font-size: 14px; }
+  #themeBtn:hover { background: var(--card); }
+  .tabs { display: flex; gap: 6px; margin: 16px 0 14px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 5px; }
+  .tabs button { flex: 1; background: transparent; color: var(--muted); font-weight: 600; font-size: 17px; padding: 10px; }
+  .tabs button.active { background: var(--accent); color: var(--on-accent); }
+  .tabs button:not(.active):hover { color: var(--text); }
+  .tabs .num { font-weight: 400; opacity: .8; }
 
-  /* Кнопки фильтра */
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chips button { background: var(--card); border-color: var(--field-line); color: var(--text); padding: 7px 14px; border-radius: 20px; }
-  .chips button:hover { background: var(--card-soft); }
-  .chips button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-
-  #dueWrap { display: none; }
-  #error { color: var(--danger); font-size: 14px; margin: -6px 0 10px; display: none; }
-  #warning { background: var(--warn-soft); color: var(--text); border: 1px solid var(--warn); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: none; }
-  .listbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 2px 10px; }
+  /* ---------- Панель: поиск, категории, сортировка ---------- */
+  .tools { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  #search { flex: 2; min-width: 200px; }
+  .tools select { flex: 1; min-width: 150px; }
+  .addrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 14px; }
+  #addBtn { background: var(--accent); color: var(--on-accent); font-weight: 600; padding: 11px 20px; }
+  #addBtn:hover { background: var(--accent-hover); }
   #shown { font-size: 14px; color: var(--muted); }
-  .listbar label { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-  .listbar select { flex: none; min-width: 0; padding: 6px 10px; font-size: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chips button { background: var(--card); border-color: var(--line); color: var(--text); padding: 6px 14px; border-radius: 20px; font-size: 15px; }
+  .chips button.active { background: var(--text); border-color: var(--text); color: var(--bg); }
+  #warning { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: none; }
 
-  /* ---------- Карточка записи ---------- */
-  .item { background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--accent); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
-  .item.task { border-left-color: var(--task); }
-  .item.overdue { border-left-color: var(--danger); }
-  .item.done { background: var(--card-soft); border-left-color: var(--field-line); }
-  .item-head { display: flex; align-items: flex-start; gap: 10px; }
-  .item-head input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
-  .title { font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
-  .item.done .title { text-decoration: line-through; color: var(--muted); }
-  .meta { font-size: 13px; color: var(--muted); margin: 5px 0 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .tag { background: var(--accent-soft); color: var(--accent-text); border-radius: 10px; padding: 1px 9px; }
-  .due { border-radius: 10px; padding: 1px 9px; background: var(--card-soft); border: 1px solid var(--line); color: var(--text); }
+  /* ---------- Заметки: плитка ---------- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding-bottom: 40px; }
+  .card { background: var(--card); border-radius: 16px; padding: 16px; cursor: pointer; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; min-height: 110px; }
+  .card:hover { background: var(--card-hover); }
+  .card .title { font-weight: 600; font-size: 18px; overflow-wrap: anywhere; }
+  .card .text { color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+  .card .meta { margin-top: auto; }
+
+  /* ---------- Задачи: список ---------- */
+  .tasklist { display: flex; flex-direction: column; gap: 8px; padding-bottom: 40px; }
+  .task { background: var(--card); border-radius: 14px; padding: 13px 14px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; box-shadow: var(--shadow); }
+  .task:hover { background: var(--card-hover); }
+  .task input[type=checkbox] { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  .task .body { flex: 1; min-width: 0; }
+  .task .title { font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
+  .task .text { color: var(--muted); font-size: 14px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task.done .title { text-decoration: line-through; color: var(--muted); }
+  .task.overdue { box-shadow: inset 4px 0 0 var(--danger); }
+
+  .meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 5px; }
+  .tag { background: var(--tag-bg); color: var(--tag-text); border-radius: 10px; padding: 1px 9px; }
+  .due { border-radius: 10px; padding: 1px 9px; border: 1px solid var(--line); color: var(--text); }
   .due.today { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
   .due.late { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); font-weight: 600; }
-  .text { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 10px; }
-  .item.done .text { color: var(--muted); }
-  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 14px; }
-  .empty { text-align: center; color: var(--muted); padding: 34px 10px; background: var(--card); border: 1px dashed var(--line); border-radius: 10px; }
+  .empty { text-align: center; color: var(--muted); padding: 50px 10px; }
+
+  /* ---------- Окно добавления и изменения ---------- */
+  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .overlay.open { display: flex; }
+  .sheet { background: var(--bg); width: 100%; max-width: 560px; max-height: 100%; overflow: auto; border-radius: 18px; padding: 18px; }
+  .sheet-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .sheet-head h2 { margin: 0; font-size: 20px; font-weight: 600; flex: 1; }
+  #backBtn { background: transparent; color: var(--text); border-color: var(--field-line); padding: 7px 12px; }
+  .sheet input[type=text], .sheet textarea { width: 100%; display: block; margin-bottom: 10px; }
+  #title { font-size: 20px; font-weight: 600; }
+  #text { min-height: 160px; resize: vertical; }
+  .sheet label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  #dueWrap { margin-bottom: 10px; }
+  #error { color: var(--danger); font-size: 14px; margin: -4px 0 10px; display: none; }
+  .sheet-foot { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+  #saveBtn { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+  #saveBtn:hover { background: var(--accent-hover); }
+  #deleteBtn { background: transparent; color: var(--danger); border-color: var(--danger); margin-left: auto; }
+  #confirm { display: none; width: 100%; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--line); }
+  #yesDel { background: var(--danger); color: #fff; }
+  #noDel { background: transparent; color: var(--text); border-color: var(--field-line); }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 26px; }
+    .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { padding: 14px; border-radius: 14px; }
+    .overlay { padding: 0; align-items: stretch; }
+    .sheet { max-width: none; border-radius: 0; min-height: 100%; }
+    #addBtn { width: 100%; }
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="wrap">
-    <div>
-      <h1>Задачи и заметки</h1>
-      <div id="counter"></div>
-    </div>
-    <button type="button" id="themeBtn" class="small">Тёмная тема</button>
+<div class="wrap top">
+  <div class="toprow">
+    <h1 id="pageTitle">Заметки</h1>
+    <button type="button" id="themeBtn">Тёмная тема</button>
   </div>
-</header>
 
-<main class="wrap">
+  <!-- Вкладки -->
+  <div class="tabs" id="tabs">
+    <button type="button" data-tab="note" class="active">Заметки <span class="num" id="numNotes"></span></button>
+    <button type="button" data-tab="task">Задачи <span class="num" id="numTasks"></span></button>
+  </div>
 
   <div id="warning">Браузер не даёт сохранять данные. Записи пропадут после закрытия страницы.</div>
 
-  <!-- Форма: добавить новую запись или изменить старую -->
-  <div class="panel">
-    <h2 id="formTitle">Новая запись</h2>
-    <div class="row">
-      <div class="switch" id="typeSwitch">
-        <button type="button" data-type="note" class="active">Заметка</button>
-        <button type="button" data-type="task">Задача</button>
-      </div>
-    </div>
-    <div class="row">
-      <input type="text" id="title" placeholder="Заголовок" maxlength="120" aria-label="Заголовок">
-      <input type="text" id="category" list="cats" placeholder="Категория, например «Учёба»" maxlength="40" aria-label="Категория">
-      <datalist id="cats"></datalist>
-    </div>
-    <div class="row" id="dueWrap">
-      <label class="field" style="flex:none">Срок выполнения (необязательно)
-        <input type="date" id="due">
-      </label>
-    </div>
-    <div id="error">Введите заголовок.</div>
-    <div class="row">
-      <textarea id="text" placeholder="Текст (необязательно)" aria-label="Текст"></textarea>
-    </div>
-    <div class="row">
-      <button type="button" id="saveBtn" class="btn-main">Добавить</button>
-      <button type="button" id="cancelBtn" class="btn-plain" style="display:none">Отмена</button>
-    </div>
+  <!-- Поиск, категории, сортировка -->
+  <div class="tools">
+    <input type="text" id="search" placeholder="Поиск" aria-label="Поиск">
+    <select id="catFilter" aria-label="Категория"><option value="">Все категории</option></select>
+    <select id="sort" aria-label="Сортировка">
+      <option value="new">Сначала новые</option>
+      <option value="old">Сначала старые</option>
+      <option value="due">По сроку</option>
+      <option value="abc">По алфавиту</option>
+    </select>
   </div>
 
-  <!-- Поиск и фильтры -->
-  <div class="panel">
-    <div class="row">
-      <input type="text" id="search" placeholder="Поиск по заголовку и тексту" aria-label="Поиск">
-      <select id="catFilter" aria-label="Категория"><option value="">Все категории</option></select>
-    </div>
-    <div class="row">
-      <div class="chips" id="filterSwitch">
-        <button type="button" data-f="all" class="active">Все</button>
-        <button type="button" data-f="note">Заметки</button>
-        <button type="button" data-f="task">Задачи</button>
-        <button type="button" data-f="open">Невыполненные</button>
-        <button type="button" data-f="done">Выполненные</button>
-        <button type="button" data-f="late">Просроченные</button>
-      </div>
-    </div>
+  <!-- Фильтры только для задач -->
+  <div class="chips" id="taskFilters">
+    <button type="button" data-f="all" class="active">Все</button>
+    <button type="button" data-f="open">Невыполненные</button>
+    <button type="button" data-f="done">Выполненные</button>
+    <button type="button" data-f="late">Просроченные</button>
   </div>
 
-  <div class="listbar">
+  <div class="addrow">
     <div id="shown"></div>
-    <label>Сортировка
-      <select id="sort">
-        <option value="new">Сначала новые</option>
-        <option value="old">Сначала старые</option>
-        <option value="due">По сроку</option>
-        <option value="abc">По алфавиту</option>
-      </select>
-    </label>
+    <button type="button" id="addBtn">Добавить заметку</button>
   </div>
-  <div id="list"></div>
 
-</main>
+  <div id="list"></div>
+</div>
+
+<!-- Окно добавления и изменения записи -->
+<div class="overlay" id="editor" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <button type="button" id="backBtn">← Назад</button>
+      <h2 id="edTitle">Новая заметка</h2>
+    </div>
+    <input type="text" id="title" placeholder="Заголовок" maxlength="120" aria-label="Заголовок">
+    <div id="error">Введите заголовок.</div>
+    <textarea id="text" placeholder="Текст" aria-label="Текст"></textarea>
+    <label for="category">Категория</label>
+    <input type="text" id="category" list="cats" placeholder="Например, «Учёба»" maxlength="40">
+    <datalist id="cats"></datalist>
+    <div id="dueWrap">
+      <label for="due">Срок выполнения</label>
+      <input type="date" id="due">
+    </div>
+    <div class="sheet-foot">
+      <button type="button" id="saveBtn">Сохранить</button>
+      <button type="button" id="deleteBtn">Удалить</button>
+      <div id="confirm">
+        <span>Удалить запись?</span>
+        <button type="button" id="yesDel">Да, удалить</button>
+        <button type="button" id="noDel">Отмена</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   // ====== 1. ДАННЫЕ ======
@@ -235,10 +241,11 @@
   //   category: '...', done: false, created: '14.11.2026', due: '2026-11-20' }
   // due (срок) есть только у задач; пустая строка — срока нет.
 
-  var KEY = 'notes_tasks_v1';          // имя, под которым записи хранятся в браузере
+  var KEY = 'notes_tasks_v1';          // записи
   var SORT_KEY = 'notes_tasks_sort';   // выбранная сортировка
   var THEME_KEY = 'notes_tasks_theme'; // выбранная тема
-  var canSave = true;                  // получается ли сохранять
+  var TAB_KEY = 'notes_tasks_tab';     // открытая вкладка
+  var canSave = true;
 
   // Достаём записи из памяти браузера (localStorage)
   function load() {
@@ -257,10 +264,10 @@
     } catch (e) {
       canSave = false;
     }
-    document.getElementById('warning').style.display = canSave ? 'none' : 'block';
+    el('warning').style.display = canSave ? 'none' : 'block';
   }
 
-  // Сохраняем мелкие настройки (тема, сортировка); если не вышло — не страшно
+  // Мелкие настройки (тема, сортировка, вкладка); если не сохранились — не страшно
   function saveSetting(key, value) {
     try { localStorage.setItem(key, value); } catch (e) {}
   }
@@ -268,13 +275,12 @@
     try { return localStorage.getItem(key); } catch (e) { return null; }
   }
 
-  var items = load();     // список всех записей
-  var formType = 'note';  // что выбрано в форме: заметка или задача
-  var editId = null;      // id записи, которую сейчас правим (null — добавляем новую)
-  var deleteId = null;    // id записи, у которой спрашиваем «точно удалить?»
-  var filter = 'all';     // выбранная кнопка фильтра
+  var items = load();      // все записи
+  var tab = 'note';        // открытая вкладка: 'note' или 'task'
+  var taskFilter = 'all';  // фильтр задач
+  var editId = null;       // id записи в окне (null — новая запись)
+  var editType = 'note';   // что создаём в окне: заметку или задачу
 
-  // Короткая запись вместо document.getElementById
   function el(id) { return document.getElementById(id); }
 
   // Превращаем спецсимволы в безопасный текст, чтобы запись не могла сломать страницу
@@ -284,7 +290,6 @@
     });
   }
 
-  // Ищем запись по id
   function findItem(id) {
     for (var i = 0; i < items.length; i++) {
       if (items[i].id === id) return items[i];
@@ -294,12 +299,10 @@
 
   // ====== 2. ДАТЫ ======
 
-  // Сегодняшняя дата в виде '2026-11-14' (так же хранится срок)
+  // Сегодня в виде '2026-11-14' (так же хранится срок)
   function todayStr() {
     var d = new Date();
-    var m = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
-    return d.getFullYear() + '-' + m + '-' + day;
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
   // '2026-11-20' -> '20.11.2026'
@@ -308,118 +311,90 @@
     return p[2] + '.' + p[1] + '.' + p[0];
   }
 
-  // Просрочена ли задача: срок прошёл, а галочки нет
+  // Просрочена: срок прошёл, а галочки нет
   function isLate(x) {
     return x.type === 'task' && !x.done && !!x.due && x.due < todayStr();
   }
 
-  // ====== 3. ФОРМА: ДОБАВЛЕНИЕ И РЕДАКТИРОВАНИЕ ======
+  // ====== 3. ОКНО ДОБАВЛЕНИЯ И ИЗМЕНЕНИЯ ======
 
-  // Переключатель «Заметка / Задача». Поле срока видно только у задачи
-  function setFormType(type) {
-    formType = type;
-    var buttons = document.querySelectorAll('#typeSwitch button');
-    buttons.forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-type') === type);
-    });
-    el('dueWrap').style.display = type === 'task' ? 'flex' : 'none';
+  // Открыть окно. id = null — новая запись, иначе — изменение записи
+  function openEditor(id) {
+    var item = id ? findItem(id) : null;
+    editId = item ? item.id : null;
+    editType = item ? item.type : tab;
+    var isTask = editType === 'task';
+
+    el('edTitle').textContent = item ? (isTask ? 'Задача' : 'Заметка') : (isTask ? 'Новая задача' : 'Новая заметка');
+    el('title').value = item ? item.title : '';
+    el('text').value = item ? item.text : '';
+    el('category').value = item ? item.category : '';
+    el('due').value = item && item.due ? item.due : '';
+    el('dueWrap').style.display = isTask ? 'block' : 'none';
+    el('deleteBtn').style.display = item ? '' : 'none';
+    el('error').style.display = 'none';
+    el('confirm').style.display = 'none';
+
+    el('editor').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    el('title').focus();
   }
 
-  // Кнопка «Добавить» / «Сохранить»
-  function saveItem() {
+  function closeEditor() {
+    el('editor').classList.remove('open');
+    document.body.style.overflow = '';
+    editId = null;
+  }
+
+  // Кнопка «Сохранить»
+  function saveEditor() {
     var title = el('title').value.trim();
     if (!title) {
       el('error').style.display = 'block';
       el('title').focus();
       return;
     }
-    var text = el('text').value.trim();
-    var category = el('category').value.trim();
-    var due = formType === 'task' ? el('due').value : '';   // у заметки срока нет
+    var data = {
+      title: title,
+      text: el('text').value.trim(),
+      category: el('category').value.trim(),
+      due: editType === 'task' ? el('due').value : ''
+    };
 
     if (editId) {
-      // правим существующую запись
       var item = findItem(editId);
       if (item) {
-        item.type = formType;
-        item.title = title;
-        item.text = text;
-        item.category = category;
-        item.due = due;
-        if (formType === 'note') item.done = false;   // у заметки нет отметки «выполнено»
+        item.title = data.title;
+        item.text = data.text;
+        item.category = data.category;
+        item.due = data.due;
       }
     } else {
-      // добавляем новую запись в начало списка
       items.unshift({
         id: Date.now(),
-        type: formType,
-        title: title,
-        text: text,
-        category: category,
+        type: editType,
+        title: data.title,
+        text: data.text,
+        category: data.category,
         done: false,
         created: new Date().toLocaleDateString('ru-RU'),
-        due: due
+        due: data.due
       });
     }
     save();
-    resetForm();
+    closeEditor();
     render();
   }
 
-  // Очищаем форму и возвращаем её в режим «Новая запись»
-  function resetForm() {
-    editId = null;
-    el('title').value = '';
-    el('text').value = '';
-    el('category').value = '';
-    el('due').value = '';
-    el('error').style.display = 'none';
-    el('formTitle').textContent = 'Новая запись';
-    el('saveBtn').textContent = 'Добавить';
-    el('cancelBtn').style.display = 'none';
-    setFormType('note');
+  // Удаление: сначала спрашиваем, потом удаляем
+  function askDelete() {
+    el('confirm').style.display = 'flex';
   }
-
-  // Кнопка «Изменить»: переносим запись в форму
-  function startEdit(id) {
-    var item = findItem(id);
-    if (!item) return;
-    editId = id;
-    deleteId = null;
-    setFormType(item.type);
-    el('title').value = item.title;
-    el('text').value = item.text;
-    el('category').value = item.category;
-    el('due').value = item.due || '';
-    el('error').style.display = 'none';
-    el('formTitle').textContent = 'Изменение записи';
-    el('saveBtn').textContent = 'Сохранить';
-    el('cancelBtn').style.display = '';
-    render();
-    window.scrollTo(0, 0);
-    el('title').focus();
-  }
-
-  // ====== 4. УДАЛЕНИЕ И ОТМЕТКА «ВЫПОЛНЕНО» ======
-
-  // Первое нажатие «Удалить» — только спрашиваем
-  function askDelete(id) {
-    deleteId = id;
-    render();
-  }
-
-  // Ответ «Отмена»
-  function cancelDelete() {
-    deleteId = null;
-    render();
-  }
-
-  // Ответ «Да, удалить»
-  function removeItem(id) {
+  function removeItem() {
+    var id = editId;
     items = items.filter(function (x) { return x.id !== id; });
-    if (editId === id) resetForm();
-    deleteId = null;
     save();
+    closeEditor();
     render();
   }
 
@@ -431,172 +406,197 @@
     render();
   }
 
-  // ====== 5. КАТЕГОРИИ, ПОИСК, ФИЛЬТРЫ, СОРТИРОВКА ======
+  // ====== 4. ОТБОР И СОРТИРОВКА ======
 
-  // Собираем список категорий из записей: для подсказки в форме и для фильтра
+  // Категории записей открытой вкладки — для фильтра; всех записей — для подсказки в окне
   function updateCategories() {
-    var cats = [];
-    items.forEach(function (x) {
-      if (x.category && cats.indexOf(x.category) === -1) cats.push(x.category);
-    });
-    cats.sort(function (a, b) { return a.localeCompare(b, 'ru'); });
+    function collect(list) {
+      var cats = [];
+      list.forEach(function (x) {
+        if (x.category && cats.indexOf(x.category) === -1) cats.push(x.category);
+      });
+      return cats.sort(function (a, b) { return a.localeCompare(b, 'ru'); });
+    }
+    var all = collect(items);
+    var mine = collect(items.filter(function (x) { return x.type === tab; }));
 
-    el('cats').innerHTML = cats.map(function (c) {
-      return '<option value="' + esc(c) + '">';
-    }).join('');
+    el('cats').innerHTML = all.map(function (c) { return '<option value="' + esc(c) + '">'; }).join('');
 
     var chosen = el('catFilter').value;
-    el('catFilter').innerHTML = '<option value="">Все категории</option>' + cats.map(function (c) {
+    el('catFilter').innerHTML = '<option value="">Все категории</option>' + mine.map(function (c) {
       return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
     }).join('');
-    el('catFilter').value = cats.indexOf(chosen) === -1 ? '' : chosen;
+    el('catFilter').value = mine.indexOf(chosen) === -1 ? '' : chosen;
   }
 
-  // Проверяем, показывать ли запись при текущих фильтрах и поиске
   function matches(x) {
-    if (filter === 'note' && x.type !== 'note') return false;
-    if (filter === 'task' && x.type !== 'task') return false;
-    if (filter === 'open' && !(x.type === 'task' && !x.done)) return false;
-    if (filter === 'done' && !(x.type === 'task' && x.done)) return false;
-    if (filter === 'late' && !isLate(x)) return false;
-
+    if (x.type !== tab) return false;
+    if (tab === 'task') {
+      if (taskFilter === 'open' && x.done) return false;
+      if (taskFilter === 'done' && !x.done) return false;
+      if (taskFilter === 'late' && !isLate(x)) return false;
+    }
     var cat = el('catFilter').value;
     if (cat && x.category !== cat) return false;
-
     var q = el('search').value.trim().toLowerCase();
     if (q && (x.title + ' ' + x.text).toLowerCase().indexOf(q) === -1) return false;
-
     return true;
   }
 
-  // Сравнение двух записей для выбранной сортировки
   function compare(a, b) {
     var mode = el('sort').value;
     if (mode === 'old') return a.id - b.id;
     if (mode === 'abc') return a.title.localeCompare(b.title, 'ru');
-    if (mode === 'due') {
-      // записи со сроком — по дате, без срока — в конце, среди них новые выше
+    if (mode === 'due' && tab === 'task') {
+      // со сроком — по дате, без срока — в конце
       if (a.due && b.due) return a.due < b.due ? -1 : (a.due > b.due ? 1 : b.id - a.id);
       if (a.due) return -1;
       if (b.due) return 1;
     }
-    return b.id - a.id;   // 'new' и запасной вариант
+    return b.id - a.id;   // сначала новые
   }
 
-  // ====== 6. ВЫВОД НА СТРАНИЦУ ======
+  // ====== 5. ВЫВОД НА СТРАНИЦУ ======
 
-  // Строим HTML одной записи
-  function itemHtml(x) {
-    var isTask = x.type === 'task';
-    var late = isLate(x);
-    var cls = 'item' + (isTask ? ' task' : '') + (x.done ? ' done' : '') + (late ? ' overdue' : '');
-    var html = '<div class="' + cls + '">';
-
-    html += '<div class="item-head">';
-    if (isTask) {
-      html += '<input type="checkbox" title="Отметить выполненной" aria-label="Выполнено" ' +
-              (x.done ? 'checked ' : '') + 'onchange="toggleDone(' + x.id + ')">';
-    }
+  function noteHtml(x) {
+    var html = '<div class="card" tabindex="0" role="button" data-id="' + x.id + '">';
     html += '<div class="title">' + esc(x.title) + '</div>';
-    html += '</div>';
-
-    html += '<div class="meta"><span>' + (isTask ? (x.done ? 'Задача выполнена' : 'Задача') : 'Заметка') + '</span>';
-    if (x.created) html += '<span>· ' + esc(x.created) + '</span>';
-    if (x.category) html += '<span class="tag">' + esc(x.category) + '</span>';
-    if (isTask && x.due) {
-      if (late) {
-        html += '<span class="due late">Просрочено: ' + showDate(x.due) + '</span>';
-      } else if (!x.done && x.due === todayStr()) {
-        html += '<span class="due today">Срок сегодня</span>';
-      } else {
-        html += '<span class="due">Срок: ' + showDate(x.due) + '</span>';
-      }
-    }
-    html += '</div>';
-
     if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
-
-    html += '<div class="actions">';
-    if (deleteId === x.id) {
-      html += '<span>Удалить запись?</span>';
-      html += '<button type="button" class="small btn-danger-full" onclick="removeItem(' + x.id + ')">Да, удалить</button>';
-      html += '<button type="button" class="small btn-plain" onclick="cancelDelete()">Отмена</button>';
-    } else {
-      html += '<button type="button" class="small btn-plain" onclick="startEdit(' + x.id + ')">Изменить</button>';
-      html += '<button type="button" class="small btn-danger" onclick="askDelete(' + x.id + ')">Удалить</button>';
-    }
+    html += '<div class="meta"><span>' + esc(x.created || '') + '</span>';
+    if (x.category) html += '<span class="tag">' + esc(x.category) + '</span>';
     html += '</div></div>';
     return html;
   }
 
-  // Перерисовываем всё: счётчик, категории и список
-  function render() {
-    updateCategories();
-
-    // счётчик в шапке
-    var notes = 0, tasks = 0, done = 0, late = 0;
-    items.forEach(function (x) {
-      if (x.type === 'task') { tasks++; if (x.done) done++; if (isLate(x)) late++; } else { notes++; }
-    });
-    var parts = ['Заметок: ' + notes, 'Задач: ' + tasks, 'выполнено: ' + done];
-    if (late) parts.push('просрочено: ' + late);
-    el('counter').innerHTML = parts.map(function (t) { return '<span>' + t + '</span>'; }).join(' · ');
-
-    // отбираем, сортируем и ставим выполненные задачи в конец
-    var shown = items.filter(matches).sort(compare);
-    var active = shown.filter(function (x) { return !x.done; });
-    var finished = shown.filter(function (x) { return x.done; });
-    shown = active.concat(finished);
-
-    if (items.length === 0) {
-      el('shown').textContent = '';
-      el('list').innerHTML = '<div class="empty">Записей пока нет. Добавьте первую в форме выше.</div>';
-      return;
+  function taskHtml(x) {
+    var late = isLate(x);
+    var html = '<div class="task' + (x.done ? ' done' : '') + (late ? ' overdue' : '') + '" tabindex="0" role="button" data-id="' + x.id + '">';
+    html += '<input type="checkbox" aria-label="Выполнено" title="Отметить выполненной"' + (x.done ? ' checked' : '') + '>';
+    html += '<div class="body"><div class="title">' + esc(x.title) + '</div>';
+    if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
+    html += '<div class="meta">';
+    if (x.category) html += '<span class="tag">' + esc(x.category) + '</span>';
+    if (x.due) {
+      if (late) html += '<span class="due late">Просрочено: ' + showDate(x.due) + '</span>';
+      else if (!x.done && x.due === todayStr()) html += '<span class="due today">Срок сегодня</span>';
+      else html += '<span class="due">Срок: ' + showDate(x.due) + '</span>';
     }
-    el('shown').textContent = 'Показано: ' + shown.length + ' из ' + items.length;
-    if (shown.length === 0) {
-      el('list').innerHTML = '<div class="empty">Ничего не найдено.</div>';
-      return;
-    }
-    el('list').innerHTML = shown.map(itemHtml).join('');
+    if (x.done) html += '<span>Выполнено</span>';
+    html += '</div></div></div>';
+    return html;
   }
 
-  // ====== 7. ТЕМА ======
+  function render() {
+    var isTask = tab === 'task';
+    updateCategories();
+
+    // заголовок, вкладки, кнопка
+    el('pageTitle').textContent = isTask ? 'Задачи' : 'Заметки';
+    document.querySelectorAll('#tabs button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+    });
+    el('addBtn').textContent = isTask ? 'Добавить задачу' : 'Добавить заметку';
+    el('taskFilters').style.display = isTask ? 'flex' : 'none';
+    el('sort').querySelector('option[value="due"]').hidden = !isTask;
+
+    // числа на вкладках
+    var notes = 0, tasks = 0, open = 0;
+    items.forEach(function (x) {
+      if (x.type === 'task') { tasks++; if (!x.done) open++; } else { notes++; }
+    });
+    el('numNotes').textContent = notes ? '(' + notes + ')' : '';
+    el('numTasks').textContent = tasks ? '(' + open + ' из ' + tasks + ')' : '';
+
+    // отбираем, сортируем; выполненные задачи — вниз
+    var total = isTask ? tasks : notes;
+    var shown = items.filter(matches).sort(compare);
+    if (isTask) {
+      shown = shown.filter(function (x) { return !x.done; }).concat(shown.filter(function (x) { return x.done; }));
+    }
+
+    var list = el('list');
+    list.className = isTask ? 'tasklist' : 'grid';
+    if (total === 0) {
+      el('shown').textContent = '';
+      list.className = '';
+      list.innerHTML = '<div class="empty">' + (isTask ? 'Задач пока нет. Нажмите «Добавить задачу».' : 'Заметок пока нет. Нажмите «Добавить заметку».') + '</div>';
+      return;
+    }
+    var lateCount = items.filter(isLate).length;
+    el('shown').textContent = 'Показано: ' + shown.length + ' из ' + total + (isTask && lateCount ? ' · просрочено: ' + lateCount : '');
+    if (shown.length === 0) {
+      list.className = '';
+      list.innerHTML = '<div class="empty">Ничего не найдено.</div>';
+      return;
+    }
+    list.innerHTML = shown.map(isTask ? taskHtml : noteHtml).join('');
+  }
+
+  // ====== 6. ВКЛАДКИ И ТЕМА ======
+
+  function setTab(t) {
+    tab = t === 'task' ? 'task' : 'note';
+    saveSetting(TAB_KEY, tab);
+    el('search').value = '';
+    el('catFilter').value = '';
+    render();
+  }
 
   function setTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     el('themeBtn').textContent = t === 'dark' ? 'Светлая тема' : 'Тёмная тема';
   }
 
-  // ====== 8. ПОДКЛЮЧАЕМ КНОПКИ И ПОЛЯ ======
+  // ====== 7. ПОДКЛЮЧАЕМ КНОПКИ ======
 
-  el('saveBtn').onclick = saveItem;
-  el('cancelBtn').onclick = resetForm;
-  el('search').oninput = render;
-  el('catFilter').onchange = render;
-  el('title').oninput = function () { el('error').style.display = 'none'; };
-  el('title').onkeydown = function (e) { if (e.key === 'Enter') saveItem(); };
-
-  document.querySelectorAll('#typeSwitch button').forEach(function (b) {
-    b.onclick = function () { setFormType(b.getAttribute('data-type')); };
+  document.querySelectorAll('#tabs button').forEach(function (b) {
+    b.onclick = function () { setTab(b.getAttribute('data-tab')); };
   });
 
-  var filterButtons = document.querySelectorAll('#filterSwitch button');
+  var filterButtons = document.querySelectorAll('#taskFilters button');
   filterButtons.forEach(function (b) {
     b.onclick = function () {
-      filter = b.getAttribute('data-f');
-      filterButtons.forEach(function (x) { x.classList.remove('active'); });
-      b.classList.add('active');
+      taskFilter = b.getAttribute('data-f');
+      filterButtons.forEach(function (x) { x.classList.toggle('active', x === b); });
       render();
     };
   });
 
-  // сортировка: восстанавливаем прошлый выбор и запоминаем новый
+  el('search').oninput = render;
+  el('catFilter').onchange = render;
+  el('sort').onchange = function () { saveSetting(SORT_KEY, el('sort').value); render(); };
+  el('addBtn').onclick = function () { openEditor(null); };
+
+  // Нажатие на заметку или задачу открывает её; галочка — отмечает выполнение
+  el('list').addEventListener('click', function (e) {
+    var box = e.target.closest('[data-id]');
+    if (!box) return;
+    var id = Number(box.getAttribute('data-id'));
+    if (e.target.matches('input[type=checkbox]')) { toggleDone(id); return; }
+    openEditor(id);
+  });
+  el('list').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.target.matches('input')) return;
+    var box = e.target.closest('[data-id]');
+    if (box) openEditor(Number(box.getAttribute('data-id')));
+  });
+
+  el('saveBtn').onclick = saveEditor;
+  el('backBtn').onclick = closeEditor;
+  el('deleteBtn').onclick = askDelete;
+  el('yesDel').onclick = removeItem;
+  el('noDel').onclick = function () { el('confirm').style.display = 'none'; };
+  el('title').oninput = function () { el('error').style.display = 'none'; };
+  el('title').onkeydown = function (e) { if (e.key === 'Enter') saveEditor(); };
+  el('editor').addEventListener('click', function (e) { if (e.target === el('editor')) closeEditor(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && el('editor').classList.contains('open')) closeEditor();
+  });
+
+  // Восстанавливаем вкладку, сортировку и тему
+  tab = loadSetting(TAB_KEY) === 'task' ? 'task' : 'note';
   var savedSort = loadSetting(SORT_KEY);
   if (['new', 'old', 'due', 'abc'].indexOf(savedSort) !== -1) el('sort').value = savedSort;
-  el('sort').onchange = function () { saveSetting(SORT_KEY, el('sort').value); render(); };
-
-  // тема: кнопка в шапке
   setTheme(document.documentElement.getAttribute('data-theme'));
   el('themeBtn').onclick = function () {
     var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -604,16 +604,16 @@
     saveSetting(THEME_KEY, next);
   };
 
-  // Если сайт открыт в двух вкладках, подхватываем изменения из другой вкладки
+  // Если сайт открыт в двух вкладках браузера, подхватываем изменения из другой
   window.addEventListener('storage', function (e) {
     if (e.key === KEY) {
       items = load();
-      if (editId && !findItem(editId)) resetForm();   // запись удалили в другой вкладке
+      if (editId && !findItem(editId)) closeEditor();
       render();
     }
   });
 
-  render();   // первый вывод списка при открытии страницы
+  render();
 </script>
 </body>
 </html>
