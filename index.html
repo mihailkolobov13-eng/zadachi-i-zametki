@@ -161,7 +161,9 @@
   #tagSuggest .opts:last-child { margin-bottom: 0; }
   #tagSuggest button { background: var(--field); border: 1px solid var(--line); color: var(--text); border-radius: 16px; padding: 4px 12px; font-size: 14px; }
   #tagSuggest button:hover { border-color: var(--accent); }
-  #tagSuggest button.new { border-style: dashed; color: var(--muted); }
+  #tagSuggest button.chosen { background: var(--tag-bg); color: var(--tag-text); border-color: transparent; cursor: default; }
+  #tagSuggest .hint { margin-top: 2px; }
+  #tagSuggest .group + .hint, #tagSuggest > .hint:first-child { margin-top: 0; }
   #tagSuggest b { color: var(--tag-text); background: var(--tag-bg); border-radius: 3px; }
   .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
   #dueWrap { margin-bottom: 10px; }
@@ -314,7 +316,26 @@
 
   // ====== ХЭШТЕГИ ======
   // Готовые хэштеги, которые предлагаются, пока своих мало
-  var BASE_TAGS = ['учёба', 'работа', 'дом', 'спорт', 'покупки', 'идеи', 'важное', 'личное'];
+  var BASE_TAGS = ['учёба', 'работа', 'дом', 'спорт', 'покупки', 'идеи', 'важное', 'срочно',
+    'личное', 'семья', 'друзья', 'здоровье', 'финансы', 'планы', 'цели', 'встречи',
+    'праздники', 'подарки', 'путешествия', 'книги', 'фильмы', 'музыка', 'рецепты', 'хобби',
+    'тренировки', 'экзамены', 'проекты', 'ссылки'];
+  var BASE_SHOWN = 12;   // сколько базовых показывать, пока ничего не введено
+  var TAGS_KEY = 'notes_tasks_tags';   // хэштеги, которые человек вводил сам (запоминаются сразу)
+  var myTags = loadMyTags();
+
+  function loadMyTags() {
+    try {
+      var t = JSON.parse(localStorage.getItem(TAGS_KEY));
+      return t && typeof t === 'object' && !Array.isArray(t) ? t : {};
+    } catch (e) { return {}; }
+  }
+
+  // Запоминаем хэштег сразу, даже если запись потом не сохранили
+  function rememberTag(t) {
+    myTags[t] = Date.now();
+    saveSetting(TAGS_KEY, JSON.stringify(myTags));
+  }
   var MAX_TAGS = 10;     // не больше 10 хэштегов у одной записи
   var editTags = [];     // хэштеги записи в открытом окне
   var tagInputOpen = false;
@@ -337,11 +358,15 @@
     return x;
   }
 
-  // Хэштеги, которые уже использовались: сначала недавние
+  // Хэштеги, которые уже использовались или вводились: сначала недавние
   function usedTags() {
     var last = {};
     items.forEach(function (x) {
       x.tags.forEach(function (t) { if (!last[t] || x.id > last[t]) last[t] = x.id; });
+    });
+    Object.keys(myTags).forEach(function (t) {
+      var c = cleanTag(t);
+      if (c && (!last[c] || myTags[t] > last[c])) last[c] = myTags[t];
     });
     return Object.keys(last).sort(function (a, b) { return last[b] - last[a]; });
   }
@@ -436,23 +461,26 @@
     var html = '';
 
     if (!q) {
-      var recent = usedTags().filter(free).slice(0, 8);
-      var base = BASE_TAGS.filter(function (t) { return free(t) && recent.indexOf(t) === -1; });
+      var recent = usedTags().filter(free).slice(0, 10);
+      var base = BASE_TAGS.filter(function (t) { return free(t) && recent.indexOf(t) === -1; }).slice(0, BASE_SHOWN);
       if (recent.length) html += '<div class="group">Вы использовали</div><div class="opts">' + recent.map(function (t) { return btn(t, '#' + esc(t)); }).join('') + '</div>';
       if (base.length) html += '<div class="group">Популярные</div><div class="opts">' + base.map(function (t) { return btn(t, '#' + esc(t)); }).join('') + '</div>';
     } else {
       var all = usedTags();
       BASE_TAGS.forEach(function (t) { if (all.indexOf(t) === -1) all.push(t); });
-      all = all.filter(free);
+      editTags.forEach(function (t) { if (all.indexOf(t) === -1) all.push(t); });
       var starts = all.filter(function (t) { return t.indexOf(q) === 0; });
       var inside = all.filter(function (t) { return t.indexOf(q) > 0; });
-      var found = starts.concat(inside).slice(0, 8);
+      var found = starts.concat(inside).slice(0, 10);
       var opts = found.map(function (t) {
         var i = t.indexOf(q);
-        return btn(t, '#' + esc(t.slice(0, i)) + '<b>' + esc(t.slice(i, i + q.length)) + '</b>' + esc(t.slice(i + q.length)));
+        var label = '#' + esc(t.slice(0, i)) + '<b>' + esc(t.slice(i, i + q.length)) + '</b>' + esc(t.slice(i + q.length));
+        // уже добавленный показываем с галочкой, нажать нельзя
+        if (!free(t)) return '<button type="button" class="chosen" disabled>✓ ' + label + '</button>';
+        return btn(t, label);
       });
-      if (found.indexOf(q) === -1 && free(q)) opts.push(btn(q, '+ новый #' + esc(q), 'new'));
-      if (opts.length) html += '<div class="group">' + (found.length ? 'Подходят' : 'Такого ещё нет') + '</div><div class="opts">' + opts.join('') + '</div>';
+      if (opts.length) html += '<div class="group">Подходят</div><div class="opts">' + opts.join('') + '</div>';
+      if (found.indexOf(q) === -1) html += '<div class="hint">Enter — добавить #' + esc(q) + '</div>';
     }
     box.innerHTML = html;
     box.style.display = html ? 'block' : 'none';
@@ -473,7 +501,10 @@
 
   function addTag(raw) {
     var t = cleanTag(raw);
-    if (t && editTags.indexOf(t) === -1 && editTags.length < MAX_TAGS) editTags.push(t);
+    if (t && editTags.indexOf(t) === -1 && editTags.length < MAX_TAGS) {
+      editTags.push(t);
+      rememberTag(t);
+    }
     if (editTags.length >= MAX_TAGS) tagInputOpen = false;   // больше добавить нельзя
     el('tagInput').value = '';
     renderTagEditor();
@@ -786,6 +817,7 @@
 
   // Если сайт открыт в двух вкладках браузера, подхватываем изменения из другой
   window.addEventListener('storage', function (e) {
+    if (e.key === TAGS_KEY) myTags = loadMyTags();
     if (e.key === KEY) {
       items = load();
       if (editId && !findItem(editId)) closeEditor();
