@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Задачи и заметки</title>
+<style>
+  /* ---------- Общие настройки ---------- */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 16px;
+    color: #1f2933;
+    background: #eef1f4;
+  }
+  header { background: #22303c; color: #fff; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+  header .wrap { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px; padding-top: 16px; padding-bottom: 16px; }
+  h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  #counter { font-size: 14px; color: #c5d0da; }
+  main.wrap { padding-top: 18px; padding-bottom: 40px; }
+
+  /* ---------- Белые блоки ---------- */
+  .panel { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; border: 1px solid #dde3e9; }
+  .panel h2 { margin: 0 0 12px; font-size: 17px; font-weight: 600; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .row:last-child { margin-bottom: 0; }
+
+  /* ---------- Поля и кнопки ---------- */
+  input[type=text], select, textarea {
+    font: inherit; padding: 9px 11px; border: 1px solid #b8c2cc; border-radius: 7px; background: #fff; color: inherit;
+  }
+  input[type=text], select { flex: 1; min-width: 170px; }
+  textarea { width: 100%; min-height: 70px; resize: vertical; display: block; }
+  input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid #1c8a8a; outline-offset: 1px; }
+  button { font: inherit; padding: 9px 16px; border-radius: 7px; border: 1px solid transparent; cursor: pointer; }
+  .btn-main { background: #1c8a8a; color: #fff; }
+  .btn-main:hover { background: #177474; }
+  .btn-plain { background: #fff; border-color: #b8c2cc; color: #1f2933; }
+  .btn-plain:hover { background: #f1f4f7; }
+  .btn-danger { background: #fff; border-color: #d9a6a2; color: #b3261e; }
+  .btn-danger:hover { background: #fdf0ef; }
+  .btn-danger-full { background: #b3261e; color: #fff; }
+  .small { padding: 5px 11px; font-size: 14px; }
+
+  /* Переключатель «Заметка / Задача» и кнопки фильтра */
+  .switch { display: inline-flex; flex-wrap: wrap; border: 1px solid #b8c2cc; border-radius: 7px; overflow: hidden; }
+  .switch button { border: none; border-radius: 0; background: #fff; color: #1f2933; }
+  .switch button + button { border-left: 1px solid #b8c2cc; }
+  .switch button.active { background: #22303c; color: #fff; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button { background: #fff; border-color: #b8c2cc; color: #1f2933; }
+  .chips button:hover { background: #f1f4f7; }
+  .chips button.active { background: #22303c; border-color: #22303c; color: #fff; }
+
+  #error { color: #b3261e; font-size: 14px; margin: -4px 0 10px; display: none; }
+  #warning { background: #fff4d6; border: 1px solid #e6c766; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: none; }
+  #shown { font-size: 14px; color: #5b6770; margin: 0 2px 10px; }
+
+  /* ---------- Карточка записи ---------- */
+  .item { background: #fff; border: 1px solid #dde3e9; border-left: 5px solid #1c8a8a; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .item.task { border-left-color: #d9822b; }
+  .item.done { background: #f6f8fa; border-left-color: #a9b4be; }
+  .item-head { display: flex; align-items: flex-start; gap: 10px; }
+  .item-head input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; cursor: pointer; accent-color: #1c8a8a; flex-shrink: 0; }
+  .title { font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
+  .item.done .title { text-decoration: line-through; color: #7b8791; }
+  .meta { font-size: 13px; color: #5b6770; margin: 4px 0 8px; }
+  .tag { background: #e3eef0; color: #17595a; border-radius: 10px; padding: 1px 9px; }
+  .text { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 10px; }
+  .item.done .text { color: #7b8791; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 14px; }
+  .empty { text-align: center; color: #5b6770; padding: 30px 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Задачи и заметки</h1>
+    <div id="counter"></div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div id="warning">Браузер не даёт сохранять данные. Записи пропадут после закрытия страницы.</div>
+
+  <!-- Форма: добавить новую запись или изменить старую -->
+  <div class="panel">
+    <h2 id="formTitle">Новая запись</h2>
+    <div class="row">
+      <div class="switch" id="typeSwitch">
+        <button type="button" data-type="note" class="active">Заметка</button>
+        <button type="button" data-type="task">Задача</button>
+      </div>
+    </div>
+    <div class="row">
+      <input type="text" id="title" placeholder="Заголовок" maxlength="120" aria-label="Заголовок">
+      <input type="text" id="category" list="cats" placeholder="Категория, например «Учёба»" maxlength="40" aria-label="Категория">
+      <datalist id="cats"></datalist>
+    </div>
+    <div id="error">Введите заголовок.</div>
+    <div class="row">
+      <textarea id="text" placeholder="Текст (необязательно)" aria-label="Текст"></textarea>
+    </div>
+    <div class="row">
+      <button type="button" id="saveBtn" class="btn-main">Добавить</button>
+      <button type="button" id="cancelBtn" class="btn-plain" style="display:none">Отмена</button>
+    </div>
+  </div>
+
+  <!-- Поиск и фильтры -->
+  <div class="panel">
+    <div class="row">
+      <input type="text" id="search" placeholder="Поиск по заголовку и тексту" aria-label="Поиск">
+      <select id="catFilter" aria-label="Категория"><option value="">Все категории</option></select>
+    </div>
+    <div class="row">
+      <div class="chips" id="filterSwitch">
+        <button type="button" data-f="all" class="active">Все</button>
+        <button type="button" data-f="note">Заметки</button>
+        <button type="button" data-f="task">Задачи</button>
+        <button type="button" data-f="open">Невыполненные</button>
+        <button type="button" data-f="done">Выполненные</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="shown"></div>
+  <div id="list"></div>
+
+</main>
+
+<script>
+  // ====== 1. ДАННЫЕ ======
+  // Все записи лежат в массиве items. Одна запись выглядит так:
+  // { id: 1731580000000, type: 'note' или 'task', title: '...', text: '...',
+  //   category: '...', done: false, created: '14.11.2026' }
+
+  var KEY = 'notes_tasks_v1';   // имя, под которым записи хранятся в браузере
+  var canSave = true;           // получается ли сохранять
+
+  // Достаём записи из памяти браузера (localStorage)
+  function load() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(KEY));
+      return Array.isArray(saved) ? saved : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Кладём записи в память браузера
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(items));
+    } catch (e) {
+      canSave = false;
+    }
+    document.getElementById('warning').style.display = canSave ? 'none' : 'block';
+  }
+
+  var items = load();     // список всех записей
+  var formType = 'note';  // что выбрано в форме: заметка или задача
+  var editId = null;      // id записи, которую сейчас правим (null — добавляем новую)
+  var deleteId = null;    // id записи, у которой спрашиваем «точно удалить?»
+  var filter = 'all';     // выбранная кнопка фильтра
+
+  // Короткая запись вместо document.getElementById
+  function el(id) { return document.getElementById(id); }
+
+  // Превращаем спецсимволы в безопасный текст, чтобы запись не могла сломать страницу
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // Ищем запись по id
+  function findItem(id) {
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id === id) return items[i];
+    }
+    return null;
+  }
+
+  // ====== 2. ФОРМА: ДОБАВЛЕНИЕ И РЕДАКТИРОВАНИЕ ======
+
+  // Переключатель «Заметка / Задача»
+  function setFormType(type) {
+    formType = type;
+    var buttons = document.querySelectorAll('#typeSwitch button');
+    buttons.forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-type') === type);
+    });
+  }
+
+  // Кнопка «Добавить» / «Сохранить»
+  function saveItem() {
+    var title = el('title').value.trim();
+    if (!title) {
+      el('error').style.display = 'block';
+      el('title').focus();
+      return;
+    }
+    var text = el('text').value.trim();
+    var category = el('category').value.trim();
+
+    if (editId) {
+      // правим существующую запись
+      var item = findItem(editId);
+      if (item) {
+        item.type = formType;
+        item.title = title;
+        item.text = text;
+        item.category = category;
+        if (formType === 'note') item.done = false;   // у заметки нет отметки «выполнено»
+      }
+    } else {
+      // добавляем новую запись в начало списка
+      items.unshift({
+        id: Date.now(),
+        type: formType,
+        title: title,
+        text: text,
+        category: category,
+        done: false,
+        created: new Date().toLocaleDateString('ru-RU')
+      });
+    }
+    save();
+    resetForm();
+    render();
+  }
+
+  // Очищаем форму и возвращаем её в режим «Новая запись»
+  function resetForm() {
+    editId = null;
+    el('title').value = '';
+    el('text').value = '';
+    el('category').value = '';
+    el('error').style.display = 'none';
+    el('formTitle').textContent = 'Новая запись';
+    el('saveBtn').textContent = 'Добавить';
+    el('cancelBtn').style.display = 'none';
+    setFormType('note');
+  }
+
+  // Кнопка «Изменить»: переносим запись в форму
+  function startEdit(id) {
+    var item = findItem(id);
+    if (!item) return;
+    editId = id;
+    deleteId = null;
+    setFormType(item.type);
+    el('title').value = item.title;
+    el('text').value = item.text;
+    el('category').value = item.category;
+    el('error').style.display = 'none';
+    el('formTitle').textContent = 'Изменение записи';
+    el('saveBtn').textContent = 'Сохранить';
+    el('cancelBtn').style.display = '';
+    render();
+    window.scrollTo(0, 0);
+    el('title').focus();
+  }
+
+  // ====== 3. УДАЛЕНИЕ И ОТМЕТКА «ВЫПОЛНЕНО» ======
+
+  // Первое нажатие «Удалить» — только спрашиваем
+  function askDelete(id) {
+    deleteId = id;
+    render();
+  }
+
+  // Ответ «Отмена»
+  function cancelDelete() {
+    deleteId = null;
+    render();
+  }
+
+  // Ответ «Да, удалить»
+  function removeItem(id) {
+    items = items.filter(function (x) { return x.id !== id; });
+    if (editId === id) resetForm();
+    deleteId = null;
+    save();
+    render();
+  }
+
+  // Галочка у задачи
+  function toggleDone(id) {
+    var item = findItem(id);
+    if (item) item.done = !item.done;
+    save();
+    render();
+  }
+
+  // ====== 4. КАТЕГОРИИ, ПОИСК, ФИЛЬТРЫ ======
+
+  // Собираем список категорий из записей: для подсказки в форме и для фильтра
+  function updateCategories() {
+    var cats = [];
+    items.forEach(function (x) {
+      if (x.category && cats.indexOf(x.category) === -1) cats.push(x.category);
+    });
+    cats.sort(function (a, b) { return a.localeCompare(b, 'ru'); });
+
+    el('cats').innerHTML = cats.map(function (c) {
+      return '<option value="' + esc(c) + '">';
+    }).join('');
+
+    var chosen = el('catFilter').value;
+    el('catFilter').innerHTML = '<option value="">Все категории</option>' + cats.map(function (c) {
+      return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
+    }).join('');
+    el('catFilter').value = cats.indexOf(chosen) === -1 ? '' : chosen;
+  }
+
+  // Проверяем, показывать ли запись при текущих фильтрах и поиске
+  function matches(x) {
+    if (filter === 'note' && x.type !== 'note') return false;
+    if (filter === 'task' && x.type !== 'task') return false;
+    if (filter === 'open' && !(x.type === 'task' && !x.done)) return false;
+    if (filter === 'done' && !(x.type === 'task' && x.done)) return false;
+
+    var cat = el('catFilter').value;
+    if (cat && x.category !== cat) return false;
+
+    var q = el('search').value.trim().toLowerCase();
+    if (q && (x.title + ' ' + x.text).toLowerCase().indexOf(q) === -1) return false;
+
+    return true;
+  }
+
+  // ====== 5. ВЫВОД НА СТРАНИЦУ ======
+
+  // Строим HTML одной записи
+  function itemHtml(x) {
+    var isTask = x.type === 'task';
+    var cls = 'item' + (isTask ? ' task' : '') + (x.done ? ' done' : '');
+    var html = '<div class="' + cls + '">';
+
+    html += '<div class="item-head">';
+    if (isTask) {
+      html += '<input type="checkbox" title="Отметить выполненной" aria-label="Выполнено" ' +
+              (x.done ? 'checked ' : '') + 'onchange="toggleDone(' + x.id + ')">';
+    }
+    html += '<div class="title">' + esc(x.title) + '</div>';
+    html += '</div>';
+
+    html += '<div class="meta">' + (isTask ? (x.done ? 'Задача выполнена' : 'Задача') : 'Заметка');
+    if (x.created) html += ' · ' + esc(x.created);
+    if (x.category) html += ' · <span class="tag">' + esc(x.category) + '</span>';
+    html += '</div>';
+
+    if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
+
+    html += '<div class="actions">';
+    if (deleteId === x.id) {
+      html += '<span>Удалить запись?</span>';
+      html += '<button type="button" class="small btn-danger-full" onclick="removeItem(' + x.id + ')">Да, удалить</button>';
+      html += '<button type="button" class="small btn-plain" onclick="cancelDelete()">Отмена</button>';
+    } else {
+      html += '<button type="button" class="small btn-plain" onclick="startEdit(' + x.id + ')">Изменить</button>';
+      html += '<button type="button" class="small btn-danger" onclick="askDelete(' + x.id + ')">Удалить</button>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  // Перерисовываем всё: счётчик, категории и список
+  function render() {
+    updateCategories();
+
+    // счётчик в шапке
+    var notes = 0, tasks = 0, done = 0;
+    items.forEach(function (x) {
+      if (x.type === 'task') { tasks++; if (x.done) done++; } else { notes++; }
+    });
+    el('counter').textContent = 'Заметок: ' + notes + ' · Задач: ' + tasks + ', выполнено: ' + done;
+
+    // отбираем записи и ставим выполненные задачи в конец
+    var shown = items.filter(matches);
+    var active = shown.filter(function (x) { return !x.done; });
+    var finished = shown.filter(function (x) { return x.done; });
+    shown = active.concat(finished);
+
+    if (items.length === 0) {
+      el('shown').textContent = '';
+      el('list').innerHTML = '<div class="empty">Записей пока нет. Добавьте первую в форме выше.</div>';
+      return;
+    }
+    el('shown').textContent = 'Показано: ' + shown.length + ' из ' + items.length;
+    if (shown.length === 0) {
+      el('list').innerHTML = '<div class="empty">Ничего не найдено.</div>';
+      return;
+    }
+    el('list').innerHTML = shown.map(itemHtml).join('');
+  }
+
+  // ====== 6. ПОДКЛЮЧАЕМ КНОПКИ И ПОЛЯ ======
+
+  el('saveBtn').onclick = saveItem;
+  el('cancelBtn').onclick = resetForm;
+  el('search').oninput = render;
+  el('catFilter').onchange = render;
+  el('title').oninput = function () { el('error').style.display = 'none'; };
+  el('title').onkeydown = function (e) { if (e.key === 'Enter') saveItem(); };
+
+  document.querySelectorAll('#typeSwitch button').forEach(function (b) {
+    b.onclick = function () { setFormType(b.getAttribute('data-type')); };
+  });
+
+  var filterButtons = document.querySelectorAll('#filterSwitch button');
+  filterButtons.forEach(function (b) {
+    b.onclick = function () {
+      filter = b.getAttribute('data-f');
+      filterButtons.forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      render();
+    };
+  });
+
+  // Если сайт открыт в двух вкладках, подхватываем изменения из другой вкладки
+  window.addEventListener('storage', function (e) {
+    if (e.key === KEY) {
+      items = load();
+      if (editId && !findItem(editId)) resetForm();   // запись удалили в другой вкладке
+      render();
+    }
+  });
+
+  render();   // первый вывод списка при открытии страницы
+</script>
+</body>
+</html>
