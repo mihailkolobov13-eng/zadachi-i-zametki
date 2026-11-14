@@ -400,7 +400,9 @@
   var editId = null;       // id записи в окне (null — новая запись)
   var editType = 'note';   // что создаём в окне: заметку или задачу
   var editSubs = [];       // пункты задачи в открытом окне
-  var sortPref = 'new';    // выбранная сортировка (на вкладке заметок «По сроку» показывается как «Сначала новые»)
+  // У каждой вкладки свои настройки: сортировка (запоминается), хэштег и поиск
+  var sortPref = { note: 'new', task: 'new' };
+  var tabState = { note: { search: '', tag: '' }, task: { search: '', tag: '' } };
 
   function el(id) { return document.getElementById(id); }
 
@@ -756,11 +758,13 @@
     });
     mine.sort(function (a, b) { return a.localeCompare(b, 'ru'); });
 
-    var chosen = el('catFilter').value;
+    var chosen = tabState[tab].tag;
     el('catFilter').innerHTML = '<option value="">Все хэштеги</option>' + mine.map(function (c) {
       return '<option value="' + esc(c) + '">#' + esc(c) + '</option>';
     }).join('');
-    el('catFilter').value = mine.indexOf(chosen) === -1 ? '' : chosen;
+    if (mine.indexOf(chosen) === -1) chosen = '';   // хэштег пропал (записи удалили) — сбрасываем
+    tabState[tab].tag = chosen;
+    el('catFilter').value = chosen;
   }
 
   function matches(x) {
@@ -863,8 +867,7 @@
     el('addBtn').textContent = isTask ? 'Добавить задачу' : 'Добавить заметку';
     el('taskFilters').style.display = isTask ? 'flex' : 'none';
     el('sort').querySelector('option[value="due"]').hidden = !isTask;
-    // в заметках нет сроков: вместо «По сроку» показываем «Сначала новые», выбор для задач не теряется
-    el('sort').value = (!isTask && sortPref === 'due') ? 'new' : sortPref;
+    el('sort').value = (!isTask && sortPref[tab] === 'due') ? 'new' : sortPref[tab];   // в заметках сроков нет
 
     // числа на вкладках
     var notes = 0, tasks = 0, open = 0;
@@ -901,11 +904,12 @@
 
   // ====== 6. ВКЛАДКИ И ТЕМА ======
 
+  // Переключение вкладки: настройки старой вкладки запоминаем, новой — возвращаем
   function setTab(t) {
+    tabState[tab].search = el('search').value;
     tab = t === 'task' ? 'task' : 'note';
     saveSetting(TAB_KEY, tab);
-    el('search').value = '';
-    el('catFilter').value = '';
+    el('search').value = tabState[tab].search;
     render();
   }
 
@@ -929,16 +933,20 @@
     };
   });
 
-  el('search').oninput = render;
-  el('catFilter').onchange = render;
-  el('sort').onchange = function () { sortPref = el('sort').value; saveSetting(SORT_KEY, sortPref); render(); };
+  el('search').oninput = function () { tabState[tab].search = el('search').value; render(); };
+  el('catFilter').onchange = function () { tabState[tab].tag = el('catFilter').value; render(); };
+  el('sort').onchange = function () {
+    sortPref[tab] = el('sort').value;
+    saveSetting(SORT_KEY, JSON.stringify(sortPref));
+    render();
+  };
   el('addBtn').onclick = function () { openEditor(null); };
 
   // Нажатие на заметку или задачу открывает её; галочка — отмечает выполнение
   el('list').addEventListener('click', function (e) {
     var tagEl = e.target.closest('.tag[data-tag]');
     if (tagEl) {
-      el('catFilter').value = tagEl.getAttribute('data-tag');
+      tabState[tab].tag = tagEl.getAttribute('data-tag');
       render();
       return;
     }
@@ -1071,8 +1079,19 @@
 
   // Восстанавливаем вкладку, сортировку и тему
   tab = loadSetting(TAB_KEY) === 'task' ? 'task' : 'note';
-  var savedSort = loadSetting(SORT_KEY);
-  if (['new', 'old', 'due', 'abc'].indexOf(savedSort) !== -1) sortPref = savedSort;
+  // Сортировка: новая запись — {note:…, task:…}; старая версия хранила одну строку на обе вкладки
+  (function () {
+    var ok = function (v) { return ['new', 'old', 'due', 'abc'].indexOf(v) !== -1; };
+    var raw = loadSetting(SORT_KEY), saved = null;
+    try { saved = JSON.parse(raw); } catch (e) { saved = raw; }
+    if (saved && typeof saved === 'object') {
+      if (ok(saved.note) && saved.note !== 'due') sortPref.note = saved.note;
+      if (ok(saved.task)) sortPref.task = saved.task;
+    } else if (ok(saved)) {
+      sortPref.task = saved;
+      sortPref.note = saved === 'due' ? 'new' : saved;
+    }
+  })();
   setTheme(document.documentElement.getAttribute('data-theme'));
   el('themeBtn').onclick = function () {
     var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
