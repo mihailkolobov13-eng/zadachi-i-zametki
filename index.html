@@ -263,10 +263,11 @@
     <input type="text" id="title" placeholder="Заголовок" maxlength="120" aria-label="Заголовок">
     <div id="error">Введите заголовок.</div>
     <textarea id="text" placeholder="Текст" aria-label="Текст"></textarea>
-    <!-- Пункты задачи (например, список покупок) -->
+    <!-- Подзадачи (например, список покупок) -->
     <div id="subWrap">
       <div id="subList"></div>
-      <button type="button" id="addSubBtn">+ Добавить пункт</button>
+      <button type="button" id="addSubBtn">+ Добавить подзадачу</button>
+      <div class="hint" id="subHint">или нажмите Enter в поле задачи</div>
     </div>
     <div id="dueWrap">
       <label for="due">Срок</label>
@@ -460,7 +461,7 @@
 
     el('edTitle').textContent = item ? (isTask ? 'Задача' : 'Заметка') : (isTask ? 'Новая задача' : 'Новая заметка');
     el('title').value = item ? item.title : '';
-    el('title').placeholder = isTask ? 'Что нужно сделать?' : 'Заголовок';
+    el('title').placeholder = isTask ? 'Задача' : 'Заголовок';
     el('text').value = item ? item.text : '';
     el('text').style.display = isTask ? 'none' : 'block';
     el('subWrap').style.display = isTask ? 'block' : 'none';
@@ -491,10 +492,11 @@
   function renderSubs() {
     el('subList').innerHTML = editSubs.map(function (s, i) {
       return '<div class="subrow' + (s.done ? ' done' : '') + '" data-i="' + i + '">' +
-        '<input type="checkbox" aria-label="Пункт выполнен"' + (s.done ? ' checked' : '') + '>' +
-        '<input type="text" maxlength="120" placeholder="Пункт" aria-label="Пункт" value="' + esc(s.text) + '">' +
-        '<button type="button" class="rm" aria-label="Убрать пункт">×</button></div>';
+        '<input type="checkbox" aria-label="Подзадача выполнена"' + (s.done ? ' checked' : '') + '>' +
+        '<input type="text" maxlength="120" placeholder="Подзадача" aria-label="Подзадача" value="' + esc(s.text) + '">' +
+        '<button type="button" class="rm" aria-label="Убрать подзадачу">×</button></div>';
     }).join('');
+    el('subHint').style.display = editSubs.length ? 'none' : 'block';
   }
 
   function focusSub(i) {
