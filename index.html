@@ -4,82 +4,161 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Задачи и заметки</title>
+<script>
+  // Тему ставим сразу, до отрисовки страницы, чтобы не мигал белый экран
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('notes_tasks_theme'); } catch (e) {}
+    if (t !== 'dark' && t !== 'light') {
+      t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
+  /* ---------- Цвета светлой и тёмной темы ---------- */
+  :root {
+    --bg: #eef1f5;
+    --card: #ffffff;
+    --card-soft: #f6f8fa;
+    --text: #1d2733;
+    --muted: #5f6b76;
+    --line: #d7dee5;
+    --field: #ffffff;
+    --field-line: #b9c3cd;
+    --accent: #177e7e;
+    --accent-hover: #126767;
+    --accent-soft: #e0efef;
+    --accent-text: #135f5f;
+    --task: #d9822b;
+    --danger: #b3261e;
+    --danger-soft: #fdeeed;
+    --warn: #b86a00;
+    --warn-soft: #fff1dc;
+    --head: #1f2c38;
+    --head-text: #ffffff;
+    --head-muted: #b9c6d2;
+    --shadow: 0 1px 2px rgba(20, 30, 40, .06);
+  }
+  [data-theme="dark"] {
+    --bg: #12171d;
+    --card: #1b232b;
+    --card-soft: #171e25;
+    --text: #e3e9ef;
+    --muted: #93a1ae;
+    --line: #2c3742;
+    --field: #141b22;
+    --field-line: #3a4754;
+    --accent: #1a7d7d;
+    --accent-hover: #208d8d;
+    --accent-soft: #19393b;
+    --accent-text: #7fd3d3;
+    --task: #e39a4c;
+    --danger: #f07b72;
+    --danger-soft: #3a2022;
+    --warn: #f0b45a;
+    --warn-soft: #3a2d17;
+    --head: #0d1217;
+    --head-text: #e3e9ef;
+    --head-muted: #8d9ba8;
+    --shadow: none;
+    color-scheme: dark;
+  }
+
   /* ---------- Общие настройки ---------- */
   * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: "Segoe UI", Roboto, Arial, sans-serif;
     font-size: 16px;
-    color: #1f2933;
-    background: #eef1f4;
+    color: var(--text);
+    background: var(--bg);
   }
-  header { background: #22303c; color: #fff; }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
-  header .wrap { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px; padding-top: 16px; padding-bottom: 16px; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 16px; }
+  header { background: var(--head); color: var(--head-text); }
+  header .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 14px; padding-bottom: 14px; }
   h1 { margin: 0; font-size: 22px; font-weight: 600; }
-  #counter { font-size: 14px; color: #c5d0da; }
-  main.wrap { padding-top: 18px; padding-bottom: 40px; }
+  #counter { font-size: 14px; color: var(--head-muted); margin-top: 2px; }
+  #counter span { white-space: nowrap; }
+  #themeBtn { background: transparent; color: var(--head-text); border: 1px solid var(--head-muted); }
+  #themeBtn:hover { background: rgba(255, 255, 255, .08); }
+  main.wrap { padding-top: 20px; padding-bottom: 48px; }
 
   /* ---------- Белые блоки ---------- */
-  .panel { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; border: 1px solid #dde3e9; }
-  .panel h2 { margin: 0 0 12px; font-size: 17px; font-weight: 600; }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .panel h2 { margin: 0 0 14px; font-size: 17px; font-weight: 600; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
   .row:last-child { margin-bottom: 0; }
+  label.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); flex: 1; min-width: 170px; }
 
   /* ---------- Поля и кнопки ---------- */
-  input[type=text], select, textarea {
-    font: inherit; padding: 9px 11px; border: 1px solid #b8c2cc; border-radius: 7px; background: #fff; color: inherit;
+  input[type=text], input[type=date], select, textarea {
+    font: inherit; padding: 9px 11px; border: 1px solid var(--field-line); border-radius: 8px;
+    background: var(--field); color: var(--text);
   }
   input[type=text], select { flex: 1; min-width: 170px; }
-  textarea { width: 100%; min-height: 70px; resize: vertical; display: block; }
-  input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid #1c8a8a; outline-offset: 1px; }
-  button { font: inherit; padding: 9px 16px; border-radius: 7px; border: 1px solid transparent; cursor: pointer; }
-  .btn-main { background: #1c8a8a; color: #fff; }
-  .btn-main:hover { background: #177474; }
-  .btn-plain { background: #fff; border-color: #b8c2cc; color: #1f2933; }
-  .btn-plain:hover { background: #f1f4f7; }
-  .btn-danger { background: #fff; border-color: #d9a6a2; color: #b3261e; }
-  .btn-danger:hover { background: #fdf0ef; }
-  .btn-danger-full { background: #b3261e; color: #fff; }
-  .small { padding: 5px 11px; font-size: 14px; }
+  textarea { width: 100%; min-height: 72px; resize: vertical; display: block; }
+  input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button { font: inherit; padding: 9px 16px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; }
+  .btn-main { background: var(--accent); color: #fff; font-weight: 600; }
+  .btn-main:hover { background: var(--accent-hover); }
+  .btn-plain { background: var(--card); border-color: var(--field-line); color: var(--text); }
+  .btn-plain:hover { background: var(--card-soft); }
+  .btn-danger { background: var(--card); border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger-soft); }
+  .btn-danger-full { background: var(--danger); color: #fff; }
+  .small { padding: 5px 12px; font-size: 14px; }
 
-  /* Переключатель «Заметка / Задача» и кнопки фильтра */
-  .switch { display: inline-flex; flex-wrap: wrap; border: 1px solid #b8c2cc; border-radius: 7px; overflow: hidden; }
-  .switch button { border: none; border-radius: 0; background: #fff; color: #1f2933; }
-  .switch button + button { border-left: 1px solid #b8c2cc; }
-  .switch button.active { background: #22303c; color: #fff; }
+  /* Переключатель «Заметка / Задача» */
+  .switch { display: inline-flex; border: 1px solid var(--field-line); border-radius: 8px; overflow: hidden; }
+  .switch button { border: none; border-radius: 0; background: var(--card); color: var(--text); }
+  .switch button + button { border-left: 1px solid var(--field-line); }
+  .switch button.active { background: var(--head); color: var(--head-text); }
+  [data-theme="dark"] .switch button.active { background: var(--accent); color: #fff; }
+
+  /* Кнопки фильтра */
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chips button { background: #fff; border-color: #b8c2cc; color: #1f2933; }
-  .chips button:hover { background: #f1f4f7; }
-  .chips button.active { background: #22303c; border-color: #22303c; color: #fff; }
+  .chips button { background: var(--card); border-color: var(--field-line); color: var(--text); padding: 7px 14px; border-radius: 20px; }
+  .chips button:hover { background: var(--card-soft); }
+  .chips button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-  #error { color: #b3261e; font-size: 14px; margin: -4px 0 10px; display: none; }
-  #warning { background: #fff4d6; border: 1px solid #e6c766; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: none; }
-  #shown { font-size: 14px; color: #5b6770; margin: 0 2px 10px; }
+  #dueWrap { display: none; }
+  #error { color: var(--danger); font-size: 14px; margin: -6px 0 10px; display: none; }
+  #warning { background: var(--warn-soft); color: var(--text); border: 1px solid var(--warn); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: none; }
+  .listbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 2px 10px; }
+  #shown { font-size: 14px; color: var(--muted); }
+  .listbar label { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .listbar select { flex: none; min-width: 0; padding: 6px 10px; font-size: 14px; }
 
   /* ---------- Карточка записи ---------- */
-  .item { background: #fff; border: 1px solid #dde3e9; border-left: 5px solid #1c8a8a; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
-  .item.task { border-left-color: #d9822b; }
-  .item.done { background: #f6f8fa; border-left-color: #a9b4be; }
+  .item { background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--accent); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .item.task { border-left-color: var(--task); }
+  .item.overdue { border-left-color: var(--danger); }
+  .item.done { background: var(--card-soft); border-left-color: var(--field-line); }
   .item-head { display: flex; align-items: flex-start; gap: 10px; }
-  .item-head input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; cursor: pointer; accent-color: #1c8a8a; flex-shrink: 0; }
+  .item-head input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
   .title { font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
-  .item.done .title { text-decoration: line-through; color: #7b8791; }
-  .meta { font-size: 13px; color: #5b6770; margin: 4px 0 8px; }
-  .tag { background: #e3eef0; color: #17595a; border-radius: 10px; padding: 1px 9px; }
+  .item.done .title { text-decoration: line-through; color: var(--muted); }
+  .meta { font-size: 13px; color: var(--muted); margin: 5px 0 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .tag { background: var(--accent-soft); color: var(--accent-text); border-radius: 10px; padding: 1px 9px; }
+  .due { border-radius: 10px; padding: 1px 9px; background: var(--card-soft); border: 1px solid var(--line); color: var(--text); }
+  .due.today { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+  .due.late { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); font-weight: 600; }
   .text { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 10px; }
-  .item.done .text { color: #7b8791; }
+  .item.done .text { color: var(--muted); }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 14px; }
-  .empty { text-align: center; color: #5b6770; padding: 30px 10px; }
+  .empty { text-align: center; color: var(--muted); padding: 34px 10px; background: var(--card); border: 1px dashed var(--line); border-radius: 10px; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="wrap">
-    <h1>Задачи и заметки</h1>
-    <div id="counter"></div>
+    <div>
+      <h1>Задачи и заметки</h1>
+      <div id="counter"></div>
+    </div>
+    <button type="button" id="themeBtn" class="small">Тёмная тема</button>
   </div>
 </header>
 
@@ -100,6 +179,11 @@
       <input type="text" id="title" placeholder="Заголовок" maxlength="120" aria-label="Заголовок">
       <input type="text" id="category" list="cats" placeholder="Категория, например «Учёба»" maxlength="40" aria-label="Категория">
       <datalist id="cats"></datalist>
+    </div>
+    <div class="row" id="dueWrap">
+      <label class="field" style="flex:none">Срок выполнения (необязательно)
+        <input type="date" id="due">
+      </label>
     </div>
     <div id="error">Введите заголовок.</div>
     <div class="row">
@@ -124,11 +208,22 @@
         <button type="button" data-f="task">Задачи</button>
         <button type="button" data-f="open">Невыполненные</button>
         <button type="button" data-f="done">Выполненные</button>
+        <button type="button" data-f="late">Просроченные</button>
       </div>
     </div>
   </div>
 
-  <div id="shown"></div>
+  <div class="listbar">
+    <div id="shown"></div>
+    <label>Сортировка
+      <select id="sort">
+        <option value="new">Сначала новые</option>
+        <option value="old">Сначала старые</option>
+        <option value="due">По сроку</option>
+        <option value="abc">По алфавиту</option>
+      </select>
+    </label>
+  </div>
   <div id="list"></div>
 
 </main>
@@ -137,10 +232,13 @@
   // ====== 1. ДАННЫЕ ======
   // Все записи лежат в массиве items. Одна запись выглядит так:
   // { id: 1731580000000, type: 'note' или 'task', title: '...', text: '...',
-  //   category: '...', done: false, created: '14.11.2026' }
+  //   category: '...', done: false, created: '14.11.2026', due: '2026-11-20' }
+  // due (срок) есть только у задач; пустая строка — срока нет.
 
-  var KEY = 'notes_tasks_v1';   // имя, под которым записи хранятся в браузере
-  var canSave = true;           // получается ли сохранять
+  var KEY = 'notes_tasks_v1';          // имя, под которым записи хранятся в браузере
+  var SORT_KEY = 'notes_tasks_sort';   // выбранная сортировка
+  var THEME_KEY = 'notes_tasks_theme'; // выбранная тема
+  var canSave = true;                  // получается ли сохранять
 
   // Достаём записи из памяти браузера (localStorage)
   function load() {
@@ -160,6 +258,14 @@
       canSave = false;
     }
     document.getElementById('warning').style.display = canSave ? 'none' : 'block';
+  }
+
+  // Сохраняем мелкие настройки (тема, сортировка); если не вышло — не страшно
+  function saveSetting(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) {}
+  }
+  function loadSetting(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
   }
 
   var items = load();     // список всех записей
@@ -186,15 +292,37 @@
     return null;
   }
 
-  // ====== 2. ФОРМА: ДОБАВЛЕНИЕ И РЕДАКТИРОВАНИЕ ======
+  // ====== 2. ДАТЫ ======
 
-  // Переключатель «Заметка / Задача»
+  // Сегодняшняя дата в виде '2026-11-14' (так же хранится срок)
+  function todayStr() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+
+  // '2026-11-20' -> '20.11.2026'
+  function showDate(s) {
+    var p = s.split('-');
+    return p[2] + '.' + p[1] + '.' + p[0];
+  }
+
+  // Просрочена ли задача: срок прошёл, а галочки нет
+  function isLate(x) {
+    return x.type === 'task' && !x.done && !!x.due && x.due < todayStr();
+  }
+
+  // ====== 3. ФОРМА: ДОБАВЛЕНИЕ И РЕДАКТИРОВАНИЕ ======
+
+  // Переключатель «Заметка / Задача». Поле срока видно только у задачи
   function setFormType(type) {
     formType = type;
     var buttons = document.querySelectorAll('#typeSwitch button');
     buttons.forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-type') === type);
     });
+    el('dueWrap').style.display = type === 'task' ? 'flex' : 'none';
   }
 
   // Кнопка «Добавить» / «Сохранить»
@@ -207,6 +335,7 @@
     }
     var text = el('text').value.trim();
     var category = el('category').value.trim();
+    var due = formType === 'task' ? el('due').value : '';   // у заметки срока нет
 
     if (editId) {
       // правим существующую запись
@@ -216,6 +345,7 @@
         item.title = title;
         item.text = text;
         item.category = category;
+        item.due = due;
         if (formType === 'note') item.done = false;   // у заметки нет отметки «выполнено»
       }
     } else {
@@ -227,7 +357,8 @@
         text: text,
         category: category,
         done: false,
-        created: new Date().toLocaleDateString('ru-RU')
+        created: new Date().toLocaleDateString('ru-RU'),
+        due: due
       });
     }
     save();
@@ -241,6 +372,7 @@
     el('title').value = '';
     el('text').value = '';
     el('category').value = '';
+    el('due').value = '';
     el('error').style.display = 'none';
     el('formTitle').textContent = 'Новая запись';
     el('saveBtn').textContent = 'Добавить';
@@ -258,6 +390,7 @@
     el('title').value = item.title;
     el('text').value = item.text;
     el('category').value = item.category;
+    el('due').value = item.due || '';
     el('error').style.display = 'none';
     el('formTitle').textContent = 'Изменение записи';
     el('saveBtn').textContent = 'Сохранить';
@@ -267,7 +400,7 @@
     el('title').focus();
   }
 
-  // ====== 3. УДАЛЕНИЕ И ОТМЕТКА «ВЫПОЛНЕНО» ======
+  // ====== 4. УДАЛЕНИЕ И ОТМЕТКА «ВЫПОЛНЕНО» ======
 
   // Первое нажатие «Удалить» — только спрашиваем
   function askDelete(id) {
@@ -298,7 +431,7 @@
     render();
   }
 
-  // ====== 4. КАТЕГОРИИ, ПОИСК, ФИЛЬТРЫ ======
+  // ====== 5. КАТЕГОРИИ, ПОИСК, ФИЛЬТРЫ, СОРТИРОВКА ======
 
   // Собираем список категорий из записей: для подсказки в форме и для фильтра
   function updateCategories() {
@@ -325,6 +458,7 @@
     if (filter === 'task' && x.type !== 'task') return false;
     if (filter === 'open' && !(x.type === 'task' && !x.done)) return false;
     if (filter === 'done' && !(x.type === 'task' && x.done)) return false;
+    if (filter === 'late' && !isLate(x)) return false;
 
     var cat = el('catFilter').value;
     if (cat && x.category !== cat) return false;
@@ -335,12 +469,27 @@
     return true;
   }
 
-  // ====== 5. ВЫВОД НА СТРАНИЦУ ======
+  // Сравнение двух записей для выбранной сортировки
+  function compare(a, b) {
+    var mode = el('sort').value;
+    if (mode === 'old') return a.id - b.id;
+    if (mode === 'abc') return a.title.localeCompare(b.title, 'ru');
+    if (mode === 'due') {
+      // записи со сроком — по дате, без срока — в конце, среди них новые выше
+      if (a.due && b.due) return a.due < b.due ? -1 : (a.due > b.due ? 1 : b.id - a.id);
+      if (a.due) return -1;
+      if (b.due) return 1;
+    }
+    return b.id - a.id;   // 'new' и запасной вариант
+  }
+
+  // ====== 6. ВЫВОД НА СТРАНИЦУ ======
 
   // Строим HTML одной записи
   function itemHtml(x) {
     var isTask = x.type === 'task';
-    var cls = 'item' + (isTask ? ' task' : '') + (x.done ? ' done' : '');
+    var late = isLate(x);
+    var cls = 'item' + (isTask ? ' task' : '') + (x.done ? ' done' : '') + (late ? ' overdue' : '');
     var html = '<div class="' + cls + '">';
 
     html += '<div class="item-head">';
@@ -351,9 +500,18 @@
     html += '<div class="title">' + esc(x.title) + '</div>';
     html += '</div>';
 
-    html += '<div class="meta">' + (isTask ? (x.done ? 'Задача выполнена' : 'Задача') : 'Заметка');
-    if (x.created) html += ' · ' + esc(x.created);
-    if (x.category) html += ' · <span class="tag">' + esc(x.category) + '</span>';
+    html += '<div class="meta"><span>' + (isTask ? (x.done ? 'Задача выполнена' : 'Задача') : 'Заметка') + '</span>';
+    if (x.created) html += '<span>· ' + esc(x.created) + '</span>';
+    if (x.category) html += '<span class="tag">' + esc(x.category) + '</span>';
+    if (isTask && x.due) {
+      if (late) {
+        html += '<span class="due late">Просрочено: ' + showDate(x.due) + '</span>';
+      } else if (!x.done && x.due === todayStr()) {
+        html += '<span class="due today">Срок сегодня</span>';
+      } else {
+        html += '<span class="due">Срок: ' + showDate(x.due) + '</span>';
+      }
+    }
     html += '</div>';
 
     if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
@@ -376,14 +534,16 @@
     updateCategories();
 
     // счётчик в шапке
-    var notes = 0, tasks = 0, done = 0;
+    var notes = 0, tasks = 0, done = 0, late = 0;
     items.forEach(function (x) {
-      if (x.type === 'task') { tasks++; if (x.done) done++; } else { notes++; }
+      if (x.type === 'task') { tasks++; if (x.done) done++; if (isLate(x)) late++; } else { notes++; }
     });
-    el('counter').textContent = 'Заметок: ' + notes + ' · Задач: ' + tasks + ', выполнено: ' + done;
+    var parts = ['Заметок: ' + notes, 'Задач: ' + tasks, 'выполнено: ' + done];
+    if (late) parts.push('просрочено: ' + late);
+    el('counter').innerHTML = parts.map(function (t) { return '<span>' + t + '</span>'; }).join(' · ');
 
-    // отбираем записи и ставим выполненные задачи в конец
-    var shown = items.filter(matches);
+    // отбираем, сортируем и ставим выполненные задачи в конец
+    var shown = items.filter(matches).sort(compare);
     var active = shown.filter(function (x) { return !x.done; });
     var finished = shown.filter(function (x) { return x.done; });
     shown = active.concat(finished);
@@ -401,7 +561,14 @@
     el('list').innerHTML = shown.map(itemHtml).join('');
   }
 
-  // ====== 6. ПОДКЛЮЧАЕМ КНОПКИ И ПОЛЯ ======
+  // ====== 7. ТЕМА ======
+
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    el('themeBtn').textContent = t === 'dark' ? 'Светлая тема' : 'Тёмная тема';
+  }
+
+  // ====== 8. ПОДКЛЮЧАЕМ КНОПКИ И ПОЛЯ ======
 
   el('saveBtn').onclick = saveItem;
   el('cancelBtn').onclick = resetForm;
@@ -423,6 +590,19 @@
       render();
     };
   });
+
+  // сортировка: восстанавливаем прошлый выбор и запоминаем новый
+  var savedSort = loadSetting(SORT_KEY);
+  if (['new', 'old', 'due', 'abc'].indexOf(savedSort) !== -1) el('sort').value = savedSort;
+  el('sort').onchange = function () { saveSetting(SORT_KEY, el('sort').value); render(); };
+
+  // тема: кнопка в шапке
+  setTheme(document.documentElement.getAttribute('data-theme'));
+  el('themeBtn').onclick = function () {
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    saveSetting(THEME_KEY, next);
+  };
 
   // Если сайт открыт в двух вкладках, подхватываем изменения из другой вкладки
   window.addEventListener('storage', function (e) {
