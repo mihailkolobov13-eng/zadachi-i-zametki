@@ -250,6 +250,19 @@
 
   /* ====== Выбранная кнопка срока ====== */
   .quick button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* ====== Ещё 6 цветов хэштегов (всего 12) ====== */
+  .tag.c6,.chip.c6{background:#ffe8d6;color:#9a3c00} [data-theme=dark] .tag.c6,[data-theme=dark] .chip.c6{background:#3f230f;color:#ffb77a}
+  .card.c6,.task.c6{box-shadow:inset 3px 0 0 #f97316} [data-theme=dark] .card.c6,[data-theme=dark] .task.c6{box-shadow:inset 3px 0 0 #f97316,0 0 18px #f973161f}
+  .tag.c7,.chip.c7{background:#d5f5e8;color:#04664a} [data-theme=dark] .tag.c7,[data-theme=dark] .chip.c7{background:#0f3a2c;color:#6ee7b7}
+  .card.c7,.task.c7{box-shadow:inset 3px 0 0 #10b981} [data-theme=dark] .card.c7,[data-theme=dark] .task.c7{box-shadow:inset 3px 0 0 #10b981,0 0 18px #10b9811f}
+  .tag.c8,.chip.c8{background:#e4e6ff;color:#3c3fb8} [data-theme=dark] .tag.c8,[data-theme=dark] .chip.c8{background:#23255a;color:#b4b8ff}
+  .card.c8,.task.c8{box-shadow:inset 3px 0 0 #6366f1} [data-theme=dark] .card.c8,[data-theme=dark] .task.c8{box-shadow:inset 3px 0 0 #6366f1,0 0 18px #6366f11f}
+  .tag.c9,.chip.c9{background:#ffe0e6;color:#a3133a} [data-theme=dark] .tag.c9,[data-theme=dark] .chip.c9{background:#45141f;color:#ff9eb1}
+  .card.c9,.task.c9{box-shadow:inset 3px 0 0 #f43f5e} [data-theme=dark] .card.c9,[data-theme=dark] .task.c9{box-shadow:inset 3px 0 0 #f43f5e,0 0 18px #f43f5e1f}
+  .tag.c10,.chip.c10{background:#dcf2fd;color:#075985} [data-theme=dark] .tag.c10,[data-theme=dark] .chip.c10{background:#0f3346;color:#8fd8fb}
+  .card.c10,.task.c10{box-shadow:inset 3px 0 0 #0ea5e9} [data-theme=dark] .card.c10,[data-theme=dark] .task.c10{box-shadow:inset 3px 0 0 #0ea5e9,0 0 18px #0ea5e91f}
+  .tag.c11,.chip.c11{background:#fdf5c4;color:#6b5300} [data-theme=dark] .tag.c11,[data-theme=dark] .chip.c11{background:#3a330c;color:#fde68a}
+  .card.c11,.task.c11{box-shadow:inset 3px 0 0 #eab308} [data-theme=dark] .card.c11,[data-theme=dark] .task.c11{box-shadow:inset 3px 0 0 #eab308,0 0 18px #eab3081f}
   .card.notag, .task.notag { box-shadow: inset 3px 0 0 #94a3b8; }
   [data-theme=dark] .card.notag, [data-theme=dark] .task.notag { box-shadow: inset 3px 0 0 #64748b, 0 0 18px rgba(100,116,139,.12); }
   .task .left { margin-left: auto; align-self: flex-start; padding-top: 3px; font-size: 13px; color: var(--muted); white-space: nowrap; }
@@ -468,7 +481,7 @@
     return x;
   }
 
-  // Цвет хэштега: каждый новый хэштег берёт следующий из 6 цветов (c0…c5)
+  // Цвет хэштега: каждый новый хэштег берёт следующий из 12 цветов (c0…c11)
   function tagColor(t) {
     var order = [];
     items.slice().sort(function (a, b) { return a.id - b.id; }).forEach(function (x) {
@@ -478,7 +491,7 @@
       if (order.indexOf(tag) === -1) order.push(tag);
     });
     var i = order.indexOf(t);
-    return 'c' + ((i < 0 ? order.length : i) % 6);
+    return 'c' + ((i < 0 ? order.length : i) % 12);
   }
 
   // Хэштеги, которые уже использовались или вводились: сначала недавние
