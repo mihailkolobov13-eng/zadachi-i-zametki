@@ -300,7 +300,10 @@
   /* Кнопка темы на шапке с переливом: при наведении не белеет, текст остаётся видно */
   #themeBtn:hover { background: rgba(255, 255, 255, .2); color: #fff; border-color: #fff; }
 
+  .due { white-space: nowrap; }
+  .tabs button { white-space: nowrap; }
   @media (max-width: 600px) {
+    .tabs button { font-size: 15px; padding: 10px 6px; }
     h1 { font-size: 26px; }
     .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
     .card { padding: 14px; border-radius: 14px; }
@@ -500,7 +503,7 @@
     if (typeof x.title !== 'string') x.title = String(x.title || '');
     if (!Array.isArray(x.subtasks)) x.subtasks = [];
     x.subtasks = x.subtasks.filter(function (s) { return s && typeof s.text === 'string'; })
-      .map(function (s) { return { text: s.text, done: !!s.done }; });
+      .map(function (s) { var o = { text: s.text, done: !!s.done }; if (s.auto && o.done) o.auto = true; return o; });
     // У задач из старых версий был текст: превращаем его строки в пункты
     if (x.type === 'task' && x.text && !x.subtasks.length) {
       x.subtasks = x.text.split('\n').map(function (t) { return t.trim(); }).filter(Boolean)
@@ -511,7 +514,32 @@
   }
 
   // Цвет хэштега: каждый новый хэштег берёт следующий из 12 цветов (c0…c11)
+  // Цвет закрепляется за хэштегом навсегда и не меняется, когда записи удаляют
+  var COLORS_KEY = 'notes_tasks_colors';
+  var tagColors = null;
+  function loadColors() {
+    try {
+      var c = JSON.parse(localStorage.getItem(COLORS_KEY));
+      return c && typeof c === 'object' && !Array.isArray(c) ? c : null;
+    } catch (e) { return null; }
+  }
   function tagColor(t) {
+    if (!tagColors) {
+      tagColors = loadColors();
+      if (!tagColors) {               // первый запуск этой версии: берём цвета, которые были раньше
+        tagColors = {};
+        oldOrder().forEach(function (tag, i) { tagColors[tag] = i % 12; });
+        saveSetting(COLORS_KEY, JSON.stringify(tagColors));
+      }
+    }
+    if (!(t in tagColors)) {
+      tagColors[t] = Object.keys(tagColors).length % 12;
+      saveSetting(COLORS_KEY, JSON.stringify(tagColors));
+    }
+    return 'c' + tagColors[t];
+  }
+  // Порядок, по которому цвета раздавались в прошлых версиях
+  function oldOrder() {
     var order = [];
     items.slice().sort(function (a, b) { return a.id - b.id; }).forEach(function (x) {
       x.tags.forEach(function (tag) { if (order.indexOf(tag) === -1) order.push(tag); });
@@ -519,8 +547,7 @@
     Object.keys(myTags).sort(function (a, b) { return myTags[a] - myTags[b]; }).forEach(function (tag) {
       if (order.indexOf(tag) === -1) order.push(tag);
     });
-    var i = order.indexOf(t);
-    return 'c' + ((i < 0 ? order.length : i) % 12);
+    return order;
   }
 
   // Хэштеги, которые уже использовались или вводились: сначала недавние
@@ -801,7 +828,15 @@
     var item = findItem(id);
     if (!item) return;
     item.done = !item.done;
-    item.subtasks.forEach(function (s) { s.done = item.done; });
+    var marked = item.subtasks.some(function (s) { return s.auto; });
+    item.subtasks.forEach(function (s) {
+      if (item.done) {
+        if (!s.done) { s.done = true; s.auto = true; }   // запоминаем, какие отметила общая галочка
+      } else if (s.auto || !marked) {
+        s.done = false;                                   // снимаем только их, свои отметки остаются
+      }
+      if (!item.done) delete s.auto;
+    });
     save();
     render();
   }
@@ -811,6 +846,7 @@
     var item = findItem(id);
     if (!item || !item.subtasks[i]) return;
     item.subtasks[i].done = !item.subtasks[i].done;
+    delete item.subtasks[i].auto;
     item.done = item.subtasks.every(function (s) { return s.done; });
     save();
     render();
@@ -1233,6 +1269,7 @@
   // Если сайт открыт в двух вкладках браузера, подхватываем изменения из другой
   window.addEventListener('storage', function (e) {
     if (e.key === TAGS_KEY) myTags = loadMyTags();
+    if (e.key === COLORS_KEY) { tagColors = loadColors(); render(); }
     if (e.key === KEY) {
       items = load();
       if (editId && !findItem(editId)) closeEditor();
