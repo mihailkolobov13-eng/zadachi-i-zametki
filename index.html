@@ -250,6 +250,8 @@
 
   /* ====== Выбранная кнопка срока ====== */
   .quick button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .card.notag, .task.notag { box-shadow: inset 3px 0 0 #94a3b8; }
+  [data-theme=dark] .card.notag, [data-theme=dark] .task.notag { box-shadow: inset 3px 0 0 #64748b, 0 0 18px rgba(100,116,139,.12); }
   .task .left { margin-left: auto; align-self: flex-start; padding-top: 3px; font-size: 13px; color: var(--muted); white-space: nowrap; }
   .task .left.late { color: var(--danger); opacity: .8; }
   .due.tomorrow { background: #ece4ff; border-color: #c4b0ff; color: #5a2ab4; }
@@ -833,13 +835,9 @@
     return html;
   }
 
-  // Цвет полосы карточки: по первому хэштегу, а у записи без хэштегов —
-  // следующий цвет по кругу, чтобы соседние записи не сливались
+  // Цвет полосы карточки: по первому хэштегу, у записей без хэштегов — один общий серый
   function stripe(x) {
-    if (x.tags.length) return ' ' + tagColor(x.tags[0]);
-    var plain = items.filter(function (y) { return !y.tags.length; })
-      .sort(function (a, b) { return a.id - b.id; });
-    return ' c' + (plain.indexOf(x) % 6);
+    return x.tags.length ? ' ' + tagColor(x.tags[0]) : ' notag';
   }
 
   function noteHtml(x) {
