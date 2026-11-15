@@ -217,29 +217,13 @@
 .chips button.active{background:#5b4ce6;border-color:#5b4ce6;color:#fff}
 
 .tag{font-weight:600}
-.tag.c0{background:#e3ecff;color:#1f4fc4}.tag.c1{background:#dcf5e5;color:#11683a}.tag.c2{background:#fff0c7;color:#784800}
-.tag.c3{background:#ffe1ee;color:#a11d58}.tag.c4{background:#ece4ff;color:#5a2ab4}.tag.c5{background:#d6f4f7;color:#08616d}
-[data-theme=dark] .tag.c0{background:#1d2c55;color:#a9c2ff}[data-theme=dark] .tag.c1{background:#173a26;color:#8fe3ad}[data-theme=dark] .tag.c2{background:#3d3010;color:#ffd46b}
-[data-theme=dark] .tag.c3{background:#43182c;color:#ff9fc7}[data-theme=dark] .tag.c4{background:#2c1f4d;color:#c8b2ff}[data-theme=dark] .tag.c5{background:#123a40;color:#86e3ee}
 .bar{height:6px;border-radius:3px;background:var(--line);margin-top:9px;overflow:hidden;max-width:240px}.bar i{display:block;height:100%;border-radius:3px;background:var(--barc)}
-.card.c0,.task.c0{box-shadow:inset 3px 0 0 #3b82f6}.card.c1,.task.c1{box-shadow:inset 3px 0 0 #84cc16}.card.c2,.task.c2{box-shadow:inset 3px 0 0 #f59e0b}
-.card.c3,.task.c3{box-shadow:inset 3px 0 0 #ec4899}.card.c4,.task.c4{box-shadow:inset 3px 0 0 #a855f7}.card.c5,.task.c5{box-shadow:inset 3px 0 0 #06b6d4}
-[data-theme=dark] .card.c0,[data-theme=dark] .task.c0{box-shadow:inset 3px 0 0 #3b82f6,0 0 18px rgba(59,130,246,.12)}
-[data-theme=dark] .card.c1,[data-theme=dark] .task.c1{box-shadow:inset 3px 0 0 #84cc16,0 0 18px rgba(132,204,22,.12)}
-[data-theme=dark] .card.c2,[data-theme=dark] .task.c2{box-shadow:inset 3px 0 0 #f59e0b,0 0 18px rgba(245,158,11,.12)}
-[data-theme=dark] .card.c3,[data-theme=dark] .task.c3{box-shadow:inset 3px 0 0 #ec4899,0 0 18px rgba(236,72,153,.12)}
-[data-theme=dark] .card.c4,[data-theme=dark] .task.c4{box-shadow:inset 3px 0 0 #a855f7,0 0 18px rgba(168,85,247,.12)}
-[data-theme=dark] .card.c5,[data-theme=dark] .task.c5{box-shadow:inset 3px 0 0 #06b6d4,0 0 18px rgba(6,182,212,.12)}
 .task.overdue{box-shadow:inset 3px 0 0 var(--danger)!important}
 
   :root { --tag-bg: #e3ecff; --tag-text: #1f4fc4; }
   [data-theme="dark"] { --tag-bg: #1d2c55; --tag-text: #a9c2ff; }
   #addBtn:hover { background: linear-gradient(120deg,#0e7490,#7c3aed,#db2777); filter: brightness(1.08); }
   #saveBtn:hover { background: linear-gradient(120deg,#2f62e8,#7c3aed); filter: brightness(1.08); }
-  .chip.c0{background:#e3ecff;color:#1f4fc4}.chip.c1{background:#dcf5e5;color:#11683a}.chip.c2{background:#fff0c7;color:#784800}
-  .chip.c3{background:#ffe1ee;color:#a11d58}.chip.c4{background:#ece4ff;color:#5a2ab4}.chip.c5{background:#d6f4f7;color:#08616d}
-  [data-theme=dark] .chip.c0{background:#1d2c55;color:#a9c2ff}[data-theme=dark] .chip.c1{background:#173a26;color:#8fe3ad}[data-theme=dark] .chip.c2{background:#3d3010;color:#ffd46b}
-  [data-theme=dark] .chip.c3{background:#43182c;color:#ff9fc7}[data-theme=dark] .chip.c4{background:#2c1f4d;color:#c8b2ff}[data-theme=dark] .chip.c5{background:#123a40;color:#86e3ee}
 
   /* ====== Ограничение длины на карточках ====== */
   .card .title, .task .title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -248,21 +232,55 @@
   .tag.more { background: var(--line); color: var(--muted); cursor: default; }
   .tag.more:hover { text-decoration: none; }
 
+  /* ====== Свой календарь для срока ====== */
+  #dueBtn { background: var(--field); border: 1px solid var(--field-line); color: var(--text); border-radius: 16px; padding: 5px 12px; font-size: 14px; }
+  #dueBtn:hover { border-color: var(--accent); }
+  #dueBtn.set { border-color: var(--accent); }
+  #cal { margin-top: 8px; width: 286px; max-width: 100%; box-sizing: border-box; padding: 12px; border-radius: 16px;
+    background: var(--card); border: 1px solid var(--line); box-shadow: 0 12px 32px rgba(20,20,60,.18); }
+  [data-theme=dark] #cal { background: #1b1f38; box-shadow: 0 12px 32px rgba(0,0,0,.5); }
+  #cal[hidden] { display: none; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .cal-head b { font-size: 15px; }
+  .cal-head button { background: transparent; color: var(--text); padding: 4px 11px; font-size: 18px; line-height: 1; border-radius: 10px; }
+  .cal-head button:hover { background: var(--line); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+  .cal-grid .wd { font-size: 12px; color: var(--muted); padding: 4px 0; }
+  .cal-grid .wd.we { color: #e0527c; }
+  .cal-grid button, .cal-head button { border: none; }
+  .cal-grid button { background: transparent; color: var(--text); padding: 0; height: 34px; border-radius: 10px; font-size: 14px; }
+  .cal-grid button:hover { background: var(--line); }
+  .cal-grid button.other { color: var(--muted); opacity: .45; }
+  .cal-grid button.we { color: #e0527c; }
+  .cal-grid button.today { box-shadow: inset 0 0 0 1.5px #7c3aed; font-weight: 600; }
+  .cal-grid button.sel, .cal-grid button.sel:hover { background: linear-gradient(120deg,#2f62e8,#7c3aed); color: #fff; opacity: 1; font-weight: 600; }
   /* ====== Выбранная кнопка срока ====== */
   .quick button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  /* ====== Ещё 6 цветов хэштегов (всего 12) ====== */
-  .tag.c6,.chip.c6{background:#ffe8d6;color:#9a3c00} [data-theme=dark] .tag.c6,[data-theme=dark] .chip.c6{background:#3f230f;color:#ffb77a}
-  .card.c6,.task.c6{box-shadow:inset 3px 0 0 #f97316} [data-theme=dark] .card.c6,[data-theme=dark] .task.c6{box-shadow:inset 3px 0 0 #f97316,0 0 18px #f973161f}
-  .tag.c7,.chip.c7{background:#d5f5e8;color:#04664a} [data-theme=dark] .tag.c7,[data-theme=dark] .chip.c7{background:#0f3a2c;color:#6ee7b7}
-  .card.c7,.task.c7{box-shadow:inset 3px 0 0 #10b981} [data-theme=dark] .card.c7,[data-theme=dark] .task.c7{box-shadow:inset 3px 0 0 #10b981,0 0 18px #10b9811f}
-  .tag.c8,.chip.c8{background:#e4e6ff;color:#3c3fb8} [data-theme=dark] .tag.c8,[data-theme=dark] .chip.c8{background:#23255a;color:#b4b8ff}
-  .card.c8,.task.c8{box-shadow:inset 3px 0 0 #6366f1} [data-theme=dark] .card.c8,[data-theme=dark] .task.c8{box-shadow:inset 3px 0 0 #6366f1,0 0 18px #6366f11f}
-  .tag.c9,.chip.c9{background:#ffe0e6;color:#a3133a} [data-theme=dark] .tag.c9,[data-theme=dark] .chip.c9{background:#45141f;color:#ff9eb1}
-  .card.c9,.task.c9{box-shadow:inset 3px 0 0 #f43f5e} [data-theme=dark] .card.c9,[data-theme=dark] .task.c9{box-shadow:inset 3px 0 0 #f43f5e,0 0 18px #f43f5e1f}
-  .tag.c10,.chip.c10{background:#dcf2fd;color:#075985} [data-theme=dark] .tag.c10,[data-theme=dark] .chip.c10{background:#0f3346;color:#8fd8fb}
-  .card.c10,.task.c10{box-shadow:inset 3px 0 0 #0ea5e9} [data-theme=dark] .card.c10,[data-theme=dark] .task.c10{box-shadow:inset 3px 0 0 #0ea5e9,0 0 18px #0ea5e91f}
-  .tag.c11,.chip.c11{background:#fdf5c4;color:#6b5300} [data-theme=dark] .tag.c11,[data-theme=dark] .chip.c11{background:#3a330c;color:#fde68a}
-  .card.c11,.task.c11{box-shadow:inset 3px 0 0 #eab308} [data-theme=dark] .card.c11,[data-theme=dark] .task.c11{box-shadow:inset 3px 0 0 #eab308,0 0 18px #eab3081f}
+  /* ====== 12 цветов хэштегов: оттенки разнесены по кругу, соседние по порядку сильно отличаются ====== */
+  .tag.c0,.chip.c0{background:#dde4fd;color:#0e2581} [data-theme=dark] .tag.c0,[data-theme=dark] .chip.c0{background:#182453;color:#8da3fc}
+  .card.c0,.task.c0{box-shadow:inset 3px 0 0 #3055e8} [data-theme=dark] .card.c0,[data-theme=dark] .task.c0{box-shadow:inset 3px 0 0 #3055e8,0 0 18px #3055e81f}
+  .tag.c1,.chip.c1{background:#fdecdd;color:#81440e} [data-theme=dark] .tag.c1,[data-theme=dark] .chip.c1{background:#533418;color:#fcc18d}
+  .card.c1,.task.c1{box-shadow:inset 3px 0 0 #e88630} [data-theme=dark] .card.c1,[data-theme=dark] .task.c1{box-shadow:inset 3px 0 0 #e88630,0 0 18px #e886301f}
+  .tag.c2,.chip.c2{background:#dffddd;color:#14770d} [data-theme=dark] .tag.c2,[data-theme=dark] .chip.c2{background:#1c5318;color:#94fc8d}
+  .card.c2,.task.c2{box-shadow:inset 3px 0 0 #3de830} [data-theme=dark] .card.c2,[data-theme=dark] .task.c2{box-shadow:inset 3px 0 0 #3de830,0 0 18px #3de8301f}
+  .tag.c3,.chip.c3{background:#fdddf5;color:#810e62} [data-theme=dark] .tag.c3,[data-theme=dark] .chip.c3{background:#531843;color:#fc8dde}
+  .card.c3,.task.c3{box-shadow:inset 3px 0 0 #e830b7} [data-theme=dark] .card.c3,[data-theme=dark] .task.c3{box-shadow:inset 3px 0 0 #e830b7,0 0 18px #e830b71f}
+  .tag.c4,.chip.c4{background:#fdf7dd;color:#7c660e} [data-theme=dark] .tag.c4,[data-theme=dark] .chip.c4{background:#534718;color:#fce68d}
+  .card.c4,.task.c4{box-shadow:inset 3px 0 0 #e8c330} [data-theme=dark] .card.c4,[data-theme=dark] .task.c4{box-shadow:inset 3px 0 0 #e8c330,0 0 18px #e8c3301f}
+  .tag.c5,.chip.c5{background:#eeddfd;color:#4b0e81} [data-theme=dark] .tag.c5,[data-theme=dark] .chip.c5{background:#381853;color:#c88dfc}
+  .card.c5,.task.c5{box-shadow:inset 3px 0 0 #9230e8} [data-theme=dark] .card.c5,[data-theme=dark] .task.c5{box-shadow:inset 3px 0 0 #9230e8,0 0 18px #9230e81f}
+  .tag.c6,.chip.c6{background:#ddfdf5;color:#0d775b} [data-theme=dark] .tag.c6,[data-theme=dark] .chip.c6{background:#185343;color:#8dfcde}
+  .card.c6,.task.c6{box-shadow:inset 3px 0 0 #30e8b7} [data-theme=dark] .card.c6,[data-theme=dark] .task.c6{box-shadow:inset 3px 0 0 #30e8b7,0 0 18px #30e8b71f}
+  .tag.c7,.chip.c7{background:#fde1dd;color:#811e0e} [data-theme=dark] .tag.c7,[data-theme=dark] .chip.c7{background:#532018;color:#fc9b8d}
+  .card.c7,.task.c7{box-shadow:inset 3px 0 0 #e84930} [data-theme=dark] .card.c7,[data-theme=dark] .task.c7{box-shadow:inset 3px 0 0 #e84930,0 0 18px #e849301f}
+  .tag.c8,.chip.c8{background:#f5fddd;color:#58730d} [data-theme=dark] .tag.c8,[data-theme=dark] .chip.c8{background:#435318;color:#defc8d}
+  .card.c8,.task.c8{box-shadow:inset 3px 0 0 #b7e830} [data-theme=dark] .card.c8,[data-theme=dark] .task.c8{box-shadow:inset 3px 0 0 #b7e830,0 0 18px #b7e8301f}
+  .tag.c9,.chip.c9{background:#ddeefd;color:#0e4b81} [data-theme=dark] .tag.c9,[data-theme=dark] .chip.c9{background:#183853;color:#8dc8fc}
+  .card.c9,.task.c9{box-shadow:inset 3px 0 0 #3092e8} [data-theme=dark] .card.c9,[data-theme=dark] .task.c9{box-shadow:inset 3px 0 0 #3092e8,0 0 18px #3092e81f}
+  .tag.c10,.chip.c10{background:#fddde8;color:#810e34} [data-theme=dark] .tag.c10,[data-theme=dark] .chip.c10{background:#53182c;color:#fc8db2}
+  .card.c10,.task.c10{box-shadow:inset 3px 0 0 #e8306e} [data-theme=dark] .card.c10,[data-theme=dark] .task.c10{box-shadow:inset 3px 0 0 #e8306e,0 0 18px #e8306e1f}
+  .tag.c11,.chip.c11{background:#ddf9fd;color:#0e7181} [data-theme=dark] .tag.c11,[data-theme=dark] .chip.c11{background:#184b53;color:#8dedfc}
+  .card.c11,.task.c11{box-shadow:inset 3px 0 0 #30d0e8} [data-theme=dark] .card.c11,[data-theme=dark] .task.c11{box-shadow:inset 3px 0 0 #30d0e8,0 0 18px #30d0e81f}
   .card.notag, .task.notag { box-shadow: inset 3px 0 0 #94a3b8; }
   [data-theme=dark] .card.notag, [data-theme=dark] .task.notag { box-shadow: inset 3px 0 0 #64748b, 0 0 18px rgba(100,116,139,.12); }
   .task .left { margin-left: auto; align-self: flex-start; padding-top: 3px; font-size: 13px; color: var(--muted); white-space: nowrap; }
@@ -344,13 +362,15 @@
       <div class="hint" id="subHint">или нажмите Enter в поле задачи</div>
     </div>
     <div id="dueWrap">
-      <label for="due">Срок</label>
+      <label for="dueBtn">Срок</label>
       <div class="quick">
-        <input type="date" id="due">
+        <input type="hidden" id="due">
+        <button type="button" id="dueBtn" aria-haspopup="dialog" aria-expanded="false">📅 <span id="dueLabel">Выбрать дату</span></button>
         <button type="button" data-due="0">Сегодня</button>
         <button type="button" data-due="1">Завтра</button>
         <button type="button" data-due="">Без срока</button>
       </div>
+      <div id="cal" role="dialog" aria-label="Выбор даты" hidden></div>
     </div>
     <div class="label">Хэштеги</div>
     <div class="tagchips">
@@ -576,6 +596,7 @@
     editTags = item ? item.tags.slice() : (el('catFilter').value ? [el('catFilter').value] : []);
     closeTagInput();
     el('due').value = item && item.due ? item.due : '';
+    closeCal();
     el('dueWrap').style.display = isTask ? 'block' : 'none';
     updateQuick();
     el('deleteBtn').style.display = item ? '' : 'none';
@@ -1067,16 +1088,62 @@
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   // подсвечиваем кнопку, которая совпадает с выбранной датой
+  var MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  var MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  var WD = ['вс','пн','вт','ср','чт','пт','сб'];
+  var calY, calM;
+  function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function dueLabel(v) {
+    if (!v) return 'Выбрать дату';
+    var p = v.split('-'), d = new Date(+p[0], p[1] - 1, +p[2]);
+    return d.getDate() + ' ' + MONTHS_GEN[d.getMonth()] + (d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : '') + ', ' + WD[d.getDay()];
+  }
+  function renderCal() {
+    var v = el('due').value, today = todayStr();
+    var first = new Date(calY, calM, 1);
+    var shift = (first.getDay() + 6) % 7;            // неделя с понедельника
+    var start = new Date(calY, calM, 1 - shift);
+    var h = '<div class="cal-head"><button type="button" data-nav="-1" aria-label="Предыдущий месяц">‹</button><b>' +
+      MONTHS[calM] + ' ' + calY + '</b><button type="button" data-nav="1" aria-label="Следующий месяц">›</button></div><div class="cal-grid">';
+    ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(function (w, i) { h += '<div class="wd' + (i > 4 ? ' we' : '') + '">' + w + '</div>'; });
+    for (var i = 0; i < 42; i++) {
+      var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i), s = iso(d), cls = [];
+      if (d.getMonth() !== calM) cls.push('other');
+      if (i % 7 > 4) cls.push('we');
+      if (s === today) cls.push('today');
+      if (s === v) cls.push('sel');
+      h += '<button type="button" data-day="' + s + '" class="' + cls.join(' ') + '">' + d.getDate() + '</button>';
+    }
+    el('cal').innerHTML = h + '</div>';
+  }
+  function openCal() {
+    var v = el('due').value, base = v ? new Date(+v.slice(0, 4), +v.slice(5, 7) - 1, 1) : new Date();
+    calY = base.getFullYear(); calM = base.getMonth();
+    renderCal(); el('cal').hidden = false; el('dueBtn').setAttribute('aria-expanded', 'true');
+  }
+  function closeCal() { el('cal').hidden = true; el('dueBtn').setAttribute('aria-expanded', 'false'); }
+  el('dueBtn').onclick = function () { if (el('cal').hidden) openCal(); else closeCal(); };
+  el('cal').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var n = e.target.closest('[data-nav]'), d = e.target.closest('[data-day]');
+    if (n) { calM += +n.getAttribute('data-nav'); if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; } renderCal(); }
+    if (d) { el('due').value = d.getAttribute('data-day'); closeCal(); updateQuick(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (!el('cal').hidden && !e.target.closest('#dueBtn, #cal')) closeCal();
+  });
   function updateQuick() {
     var v = el('due').value;
-    document.querySelectorAll('#dueWrap .quick button').forEach(function (b) {
+    el('dueLabel').textContent = dueLabel(v);
+    el('dueBtn').classList.toggle('set', !!v);
+    document.querySelectorAll('#dueWrap .quick button[data-due]').forEach(function (b) {
       var days = b.getAttribute('data-due');
       var match = days === '' ? v === '' : v === dayStr(Number(days));
       b.classList.toggle('active', match);
       b.setAttribute('aria-pressed', match ? 'true' : 'false');
     });
   }
-  document.querySelectorAll('#dueWrap .quick button').forEach(function (b) {
+  document.querySelectorAll('#dueWrap .quick button[data-due]').forEach(function (b) {
     b.onclick = function () {
       var days = b.getAttribute('data-due');
       el('due').value = days === '' ? '' : dayStr(Number(days));
@@ -1120,6 +1187,7 @@
     if (b) removeTag(b.getAttribute('data-rm'));
   });
   document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !el('cal').hidden) { closeCal(); return; }
     if (e.key === 'Escape' && el('editor').classList.contains('open')) closeEditor();
   });
 
