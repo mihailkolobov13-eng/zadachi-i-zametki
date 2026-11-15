@@ -250,6 +250,10 @@
 
   /* ====== Выбранная кнопка срока ====== */
   .quick button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .task .left { margin-left: auto; align-self: flex-start; padding-top: 3px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .task .left.late { color: var(--danger); opacity: .8; }
+  .due.tomorrow { background: #ece4ff; border-color: #c4b0ff; color: #5a2ab4; }
+  [data-theme="dark"] .due.tomorrow { background: #2c1f4d; border-color: #5b45a0; color: #c8b2ff; }
 
   /* Кнопка темы на шапке с переливом: при наведении не белеет, текст остаётся видно */
   #themeBtn:hover { background: rgba(255, 255, 255, .2); color: #fff; border-color: #fff; }
@@ -514,6 +518,22 @@
   function showDate(s) {
     var p = s.split('-');
     return p[2] + '.' + p[1] + '.' + p[0];
+  }
+
+  // Сколько дней до срока: 0 — сегодня, 1 — завтра, -2 — два дня назад
+  function daysLeft(due) {
+    var p = due.split('-');
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    var t = new Date(); t.setHours(0, 0, 0, 0);
+    return Math.round((d - t) / 86400000);
+  }
+
+  // 1 день, 2 дня, 5 дней, 11 дней, 21 день
+  function daysWord(n) {
+    var a = n % 10, b = n % 100;
+    if (a === 1 && b !== 11) return n + ' день';
+    if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return n + ' дня';
+    return n + ' дней';
   }
 
   // Просрочена: срок прошёл, а галочки нет
@@ -855,10 +875,18 @@
     if (x.due) {
       if (late) html += '<span class="due late">Просрочено: ' + showDate(x.due) + '</span>';
       else if (!x.done && x.due === todayStr()) html += '<span class="due today">Срок сегодня</span>';
+      else if (!x.done && x.due === dayStr(1)) html += '<span class="due tomorrow">Срок завтра</span>';
       else html += '<span class="due">Срок: ' + showDate(x.due) + '</span>';
     }
     if (x.done) html += '<span>Выполнено</span>';
-    html += '</div></div></div>';
+    html += '</div></div>';
+    // справа незаметно: сколько дней осталось или сколько прошло
+    if (x.due && !x.done) {
+      var n = daysLeft(x.due);
+      if (n >= 2) html += '<span class="left">через ' + daysWord(n) + '</span>';
+      else if (n < 0) html += '<span class="left late">' + daysWord(-n) + ' назад</span>';
+    }
+    html += '</div>';
     return html;
   }
 
