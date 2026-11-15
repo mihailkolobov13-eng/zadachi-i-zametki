@@ -813,9 +813,13 @@
     return html;
   }
 
-  // Цвет полосы карточки — по первому хэштегу
+  // Цвет полосы карточки: по первому хэштегу, а у записи без хэштегов —
+  // следующий цвет по кругу, чтобы соседние записи не сливались
   function stripe(x) {
-    return x.tags.length ? ' ' + tagColor(x.tags[0]) : '';
+    if (x.tags.length) return ' ' + tagColor(x.tags[0]);
+    var plain = items.filter(function (y) { return !y.tags.length; })
+      .sort(function (a, b) { return a.id - b.id; });
+    return ' c' + (plain.indexOf(x) % 6);
   }
 
   function noteHtml(x) {
