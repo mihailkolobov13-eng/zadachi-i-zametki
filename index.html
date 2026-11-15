@@ -104,7 +104,7 @@
   #warning { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: none; }
 
   /* ---------- Заметки: плитка ---------- */
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding-bottom: 40px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding-bottom: 14px; }
   .card { background: var(--card); border-radius: 16px; padding: 16px; cursor: pointer; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; min-height: 110px; }
   .card:hover { background: var(--card-hover); }
   .card .title { font-weight: 600; font-size: 18px; overflow-wrap: anywhere; }
@@ -113,7 +113,7 @@
   .card .meta { margin-top: auto; }
 
   /* ---------- Задачи: список ---------- */
-  .tasklist { display: flex; flex-direction: column; gap: 8px; padding-bottom: 40px; }
+  .tasklist { display: flex; flex-direction: column; gap: 8px; padding-bottom: 14px; }
   .task { background: var(--card); border-radius: 14px; padding: 13px 14px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; box-shadow: var(--shadow); }
   .task:hover { background: var(--card-hover); }
   .task input[type=checkbox] { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
@@ -301,6 +301,21 @@
   #themeBtn:hover { background: rgba(255, 255, 255, .2); color: #fff; border-color: #fff; }
 
   .due { white-space: nowrap; }
+  /* Свёрнутые выполненные задачи */
+  #doneToggle { align-self: flex-start; background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 16px; padding: 6px 14px; font-size: 14px; margin: 6px 0 2px; }
+  #doneToggle:hover { color: var(--text); border-color: var(--accent); }
+  /* Копия данных внизу страницы */
+  .backup { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; font-size: 13px; color: var(--muted); padding: 6px 0 40px; border-top: 1px solid var(--line); margin-top: 10px; padding-top: 16px; }
+  .backup button { background: transparent; color: var(--text); border: 1px solid var(--field-line); border-radius: 16px; padding: 5px 12px; font-size: 13px; }
+  .backup button:hover { border-color: var(--accent); }
+  /* Всплывающая строка «Запись удалена · Вернуть» */
+  #toast { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 30px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+    background: #1f2340; color: #fff; border-radius: 14px; padding: 10px 10px 10px 16px; display: flex; gap: 14px; align-items: center; z-index: 50;
+    box-shadow: 0 10px 30px rgba(0,0,0,.3); max-width: calc(100% - 32px); font-size: 15px; }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  #toast:not(:has(button)) { padding-right: 16px; }
+  #toast button { background: #7c3aed; color: #fff; border: none; border-radius: 10px; padding: 6px 14px; font-weight: 600; }
+  [data-theme=dark] #toast { background: #e8e9f6; color: #171a2c; }
   .tabs button { white-space: nowrap; }
   @media (max-width: 600px) {
     .tabs button { font-size: 15px; padding: 10px 6px; }
@@ -355,7 +370,16 @@
   </div>
 
   <div id="list"></div>
+
+  <div class="backup">
+    <span>Всё хранится только в этом браузере.</span>
+    <button type="button" id="exportBtn">Скачать копию</button>
+    <button type="button" id="importBtn">Загрузить из файла</button>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+  </div>
 </div>
+
+<div id="toast" role="status" aria-live="polite"></div>
 
 <!-- Окно добавления и изменения записи -->
 <div class="overlay" id="editor" role="dialog" aria-modal="true" aria-labelledby="edTitle">
@@ -451,6 +475,7 @@
   var items = load();      // все записи
   var tab = 'note';        // открытая вкладка: 'note' или 'task'
   var taskFilter = 'all';  // фильтр задач
+  var showDone = loadSetting('notes_tasks_showdone') === '1';   // раскрыты ли выполненные
   var editId = null;       // id записи в окне (null — новая запись)
   var editType = 'note';   // что создаём в окне: заметку или задачу
   var editSubs = [];       // пункты задачи в открытом окне
@@ -523,7 +548,7 @@
       return c && typeof c === 'object' && !Array.isArray(c) ? c : null;
     } catch (e) { return null; }
   }
-  function tagColor(t) {
+  function initColors() {
     if (!tagColors) {
       tagColors = loadColors();
       if (!tagColors) {               // первый запуск этой версии: берём цвета, которые были раньше
@@ -532,6 +557,9 @@
         saveSetting(COLORS_KEY, JSON.stringify(tagColors));
       }
     }
+  }
+  function tagColor(t) {
+    initColors();
     if (!(t in tagColors)) {
       tagColors[t] = Object.keys(tagColors).length % 12;
       saveSetting(COLORS_KEY, JSON.stringify(tagColors));
@@ -817,10 +845,83 @@
   }
   function removeItem() {
     var id = editId;
+    var pos = -1;
+    items.forEach(function (x, i) { if (x.id === id) pos = i; });
+    var gone = pos >= 0 ? items[pos] : null;
     items = items.filter(function (x) { return x.id !== id; });
     save();
     closeEditor();
     render();
+    if (gone) {
+      showToast((gone.type === 'task' ? 'Задача удалена' : 'Заметка удалена'), 'Вернуть', function () {
+        if (findItem(gone.id)) return;
+        items.splice(Math.min(pos, items.length), 0, gone);
+        save();
+        render();
+      });
+    }
+  }
+
+  // Всплывающая строка внизу: текст и, если нужно, кнопка (например «Вернуть»)
+  var toastTimer = null;
+  function showToast(text, action, onAction) {
+    var t = el('toast');
+    t.innerHTML = '<span>' + esc(text) + '</span>' + (action ? '<button type="button">' + esc(action) + '</button>' : '');
+    t.classList.add('show');
+    if (action) t.querySelector('button').onclick = function () { hideToast(); onAction(); };
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, action ? 7000 : 4000);
+  }
+  function hideToast() { el('toast').classList.remove('show'); }
+
+  // ====== КОПИЯ ДАННЫХ ======
+  // Скачать: все записи, хэштеги и цвета в один файл .json
+  function exportData() {
+    var data = { app: 'zadachi-i-zametki', version: 1, saved: new Date().toISOString(),
+      items: items, tags: myTags, colors: tagColors || {} };
+    var blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+    var a = document.createElement('a');
+    var d = new Date();
+    a.href = URL.createObjectURL(blob);
+    a.download = 'заметки_и_задачи_' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    showToast('Копия скачана: ' + items.length + ' ' + recWord(items.length));
+  }
+  function recWord(n) {
+    var a = n % 10, b = n % 100;
+    if (a === 1 && b !== 11) return 'запись';
+    if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return 'записи';
+    return 'записей';
+  }
+  // Загрузить: записи из файла добавляются к текущим, совпадающие не дублируются и не затираются
+  function importData(text) {
+    var data;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    var list = data && Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : null);
+    if (!list) { showToast('Это не файл копии сайта'); return; }
+    var added = 0, same = 0;
+    list.filter(function (x) { return x && typeof x === 'object' && typeof x.id === 'number' && (x.type === 'note' || x.type === 'task'); })
+      .map(upgrade).forEach(function (x) {
+        if (findItem(x.id)) { same++; return; }
+        items.push(x); added++;
+      });
+    items.sort(function (a, b) { return b.id - a.id; });
+    if (data.tags && typeof data.tags === 'object') {
+      Object.keys(data.tags).forEach(function (t) { if (!myTags[t]) myTags[t] = data.tags[t]; });
+      saveSetting(TAGS_KEY, JSON.stringify(myTags));
+    }
+    if (data.colors && typeof data.colors === 'object') {
+      initColors();
+      Object.keys(data.colors).forEach(function (t) {
+        var c = Number(data.colors[t]);
+        if (!(t in tagColors) && c >= 0 && c < 12) tagColors[t] = c;
+      });
+      saveSetting(COLORS_KEY, JSON.stringify(tagColors));
+    }
+    save();
+    render();
+    showToast('Загружено: добавлено ' + added + ' ' + recWord(added) + (same ? ', ' + same + ' уже были' : ''));
   }
 
   // Галочка у задачи: отмечает и все её пункты
@@ -1012,6 +1113,19 @@
       list.innerHTML = '<div class="empty">Ничего не найдено.</div>';
       return;
     }
+    if (isTask && taskFilter !== 'done') {
+      // выполненные свёрнуты в строку «Выполненные (N)», чтобы не копились в списке
+      var openOnes = shown.filter(function (x) { return !x.done; });
+      var doneOnes = shown.filter(function (x) { return x.done; });
+      var html = openOnes.map(taskHtml).join('');
+      if (doneOnes.length) {
+        html += '<button type="button" id="doneToggle" aria-expanded="' + showDone + '">' +
+          (showDone ? '▴' : '▾') + ' Выполненные (' + doneOnes.length + ')</button>';
+        if (showDone) html += doneOnes.map(taskHtml).join('');
+      }
+      list.innerHTML = html;
+      return;
+    }
     list.innerHTML = shown.map(isTask ? taskHtml : noteHtml).join('');
   }
 
@@ -1057,6 +1171,12 @@
 
   // Нажатие на заметку или задачу открывает её; галочка — отмечает выполнение
   el('list').addEventListener('click', function (e) {
+    if (e.target.closest('#doneToggle')) {
+      showDone = !showDone;
+      saveSetting('notes_tasks_showdone', showDone ? '1' : '0');
+      render();
+      return;
+    }
     var tagEl = e.target.closest('.tag[data-tag]');
     if (tagEl) {
       tabState[tab].tag = tagEl.getAttribute('data-tag');
@@ -1080,6 +1200,15 @@
     if (box) openEditor(Number(box.getAttribute('data-id')));
   });
 
+  el('exportBtn').onclick = exportData;
+  el('importBtn').onclick = function () { el('importFile').value = ''; el('importFile').click(); };
+  el('importFile').onchange = function () {
+    var f = el('importFile').files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { importData(String(r.result)); };
+    r.readAsText(f);
+  };
   el('saveBtn').onclick = saveEditor;
   el('backBtn').onclick = closeEditor;
   el('deleteBtn').onclick = askDelete;
