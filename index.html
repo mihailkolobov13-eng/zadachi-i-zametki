@@ -301,6 +301,31 @@
   #themeBtn:hover { background: rgba(255, 255, 255, .2); color: #fff; border-color: #fff; }
 
   .due { white-space: nowrap; }
+  .forget::after { content: '×'; }
+  .forget { margin-left: 6px; padding: 0 4px; border-radius: 8px; color: var(--muted); }
+  .forget:hover { background: var(--danger-soft); color: var(--danger); }
+  /* На телефоне кнопки покрупнее, чтобы палец не промахивался */
+  @media (max-width: 600px) {
+    .task input.main { width: 26px; height: 26px; }
+    .task .star { padding: 6px 8px; margin: -6px -8px -6px 0; font-size: 22px; }
+    .sub input { width: 22px; height: 22px; }
+    .sub { padding: 2px 0; }
+    .meta .tag { padding: 3px 10px; }
+    .backup button { padding: 8px 14px; }
+    .chip button { padding: 4px 10px; }
+    .quick button { padding: 7px 12px; }
+    .subrow input[type=checkbox] { width: 24px; height: 24px; }
+    .subrow .rm { padding: 8px 10px; }
+  }
+  /* Печать: только сами записи, без кнопок и полей */
+  @media print {
+    .toprow { background: none !important; color: #000; padding: 0 0 10px; }
+    .toprow h1 { color: #000; }
+    #themeBtn, .tabs, .tools, #taskFilters, .addrow, .backup, .star, .left, #toast, .overlay, #moreBtn, #doneToggle { display: none !important; }
+    body { background: #fff; color: #000; }
+    .card, .task { box-shadow: none !important; border: 1px solid #ccc; break-inside: avoid; }
+    .card a, .sub a { color: #000; }
+  }
   /* длинный хэштег не вылезает за карточку, обрезается с «…» */
   .meta .tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
   .chip { max-width: 100%; overflow-wrap: anywhere; }
@@ -520,7 +545,7 @@
     try {
       var saved = JSON.parse(localStorage.getItem(KEY));
       if (!Array.isArray(saved)) return [];
-      return saved.filter(function (x) { return x && typeof x === 'object'; }).map(upgrade);
+      return saved.filter(validRecord).map(upgrade);
     } catch (e) {
       return [];
     }
@@ -596,7 +621,16 @@
   }
 
   // Запись из старой версии: категорию превращаем в хэштег
+  // Запись годится, если у неё нормальный номер и понятный тип
+  function validRecord(x) {
+    return !!x && typeof x === 'object' && Number.isSafeInteger(x.id) && x.id > 0 &&
+      (x.type === 'note' || x.type === 'task' || x.type === undefined);
+  }
+
   function upgrade(x) {
+    if (x.type !== 'task') x.type = 'note';
+    if (typeof x.title !== 'string' || !x.title.trim()) x.title = 'Без названия';
+    if (x.repeat !== 'month' || !(x.repeatDay >= 1 && x.repeatDay <= 31)) delete x.repeatDay;
     // необязательные поля: храним, только если они включены
     if (x.pinned !== true) delete x.pinned;
     if (x.star !== true) delete x.star;
@@ -755,12 +789,14 @@
     el('confirm').style.display = 'none';
 
     el('editor').classList.add('open');
+    openedAt = Date.now();
     document.body.style.overflow = 'hidden';
     el('title').focus();
   }
 
   function closeEditor() {
     var back = editId;
+    if (el('editor').contains(document.activeElement)) document.activeElement.blur();
     el('editor').classList.remove('open');
     document.body.style.overflow = '';
     editId = null;
@@ -830,7 +866,12 @@
     if (!q) {
       var recent = usedTags().filter(free).slice(0, 10);
       var base = BASE_TAGS.filter(function (t) { return free(t) && recent.indexOf(t) === -1; }).slice(0, BASE_SHOWN);
-      if (recent.length) html += '<div class="group">Вы использовали</div><div class="opts">' + recent.map(function (t) { return btn(t, '#' + esc(t)); }).join('') + '</div>';
+      var inUse = {};
+      items.forEach(function (x) { x.tags.forEach(function (t) { inUse[t] = 1; }); });
+      // хэштег, которого нет ни в одной записи, можно убрать из подсказок крестиком
+      if (recent.length) html += '<div class="group">Вы использовали</div><div class="opts">' + recent.map(function (t) {
+        return inUse[t] ? btn(t, '#' + esc(t)) : btn(t, '#' + esc(t) + '<span class="forget" data-forget="' + esc(t) + '" title="Убрать из подсказок" aria-label="Убрать #' + esc(t) + ' из подсказок"></span>');
+      }).join('') + '</div>';
       if (base.length) html += '<div class="group">Популярные</div><div class="opts">' + base.map(function (t) { return btn(t, '#' + esc(t)); }).join('') + '</div>';
     } else {
       var all = usedTags();
@@ -885,6 +926,7 @@
 
   // Кнопка «Сохранить»
   function saveEditor() {
+    if (!el('editor').classList.contains('open')) return;   // окно уже закрыто (быстрый второй Enter) — второй раз не сохраняем
     var title = el('title').value.trim();
     if (!title) {
       el('error').style.display = 'block';
@@ -914,9 +956,10 @@
         item.title = data.title;
         item.text = data.text;
         item.tags = data.tags;
+        var dueChanged = item.due !== data.due;
         item.due = data.due;
         item.subtasks = data.subtasks;
-        setFlags(item, editPin, rep);
+        setFlags(item, editPin, rep, dueChanged);
         if (subs.length) item.done = allDone;   // все пункты отмечены — задача выполнена
         if (item.done && item.repeat) nextRepeat(item);
       }
@@ -932,7 +975,7 @@
         created: new Date().toLocaleDateString('ru-RU'),
         due: data.due
       };
-      setFlags(fresh, editPin, rep);
+      setFlags(fresh, editPin, rep, true);
       items.unshift(fresh);
     }
     save();
@@ -951,9 +994,13 @@
   // Закрепление (заметки) и «Важное» (задачи) — одна кнопка в окне, смысл один: запись наверху
   var editPin = false;
   var editRepeat = '';
-  function setFlags(item, pin, rep) {
+  function setFlags(item, pin, rep, dueChanged) {
     var key = item.type === 'task' ? 'star' : 'pinned';
     if (pin) item[key] = true; else delete item[key];
+    // для «каждый месяц» запоминаем число (31-е), чтобы после февраля не съехать на 28-е навсегда
+    if (item.type === 'task' && rep === 'month' && item.due) {
+      if (dueChanged || item.repeat !== 'month' || !item.repeatDay) item.repeatDay = Number(item.due.slice(8, 10));
+    } else delete item.repeatDay;
     if (item.type === 'task' && rep) item.repeat = rep; else delete item.repeat;
   }
   function updatePin() {
@@ -966,8 +1013,9 @@
   // ====== ПОВТОР ======
   var REP_WORD = { day: 'каждый день', week: 'каждую неделю', month: 'каждый месяц' };
   // Следующая дата: шагаем от срока, пока не окажемся после сегодняшнего дня
-  function nextDate(due, rep) {
+  function nextDate(due, rep, wantDay) {
     var p = due.split('-'), y = +p[0], m = +p[1] - 1, day = +p[2];
+    if (rep === 'month' && wantDay) day = wantDay;
     var today = todayStr(), d, k = 0, s;
     do {
       k++;
@@ -984,7 +1032,7 @@
   // Повторяющуюся задачу не закрываем, а переносим на следующий раз
   function nextRepeat(item) {
     var was = { due: item.due, subs: item.subtasks.map(function (s) { return s.done; }) };
-    item.due = nextDate(item.due, item.repeat);
+    item.due = nextDate(item.due, item.repeat, item.repeatDay);
     item.done = false;
     item.subtasks.forEach(function (s) { s.done = false; delete s.auto; });
     showToast('Готово. Следующий раз: ' + showDate(item.due), 'Отменить', function () {
@@ -1004,7 +1052,7 @@
     try { t = JSON.parse(localStorage.getItem(TRASH_KEY)) || []; } catch (e) { t = []; }
     if (!Array.isArray(t)) t = [];
     var limit = Date.now() - TRASH_DAYS * 86400000;   // старше 30 дней — удаляем насовсем
-    var kept = t.filter(function (r) { return r && r.item && typeof r.item.id === 'number' && r.deleted > limit; })
+    var kept = t.filter(function (r) { return r && validRecord(r.item) && r.deleted > limit; })
       .map(function (r) { return { item: upgrade(r.item), deleted: r.deleted }; });
     if (kept.length !== t.length) saveSetting(TRASH_KEY, JSON.stringify(kept));   // и из памяти браузера тоже
     return kept;
@@ -1034,6 +1082,7 @@
   function openTrash() {
     renderTrash();
     el('trash').classList.add('open');
+    openedAt = Date.now();
     document.body.style.overflow = 'hidden';
     el('trashBack').focus();
   }
@@ -1107,7 +1156,7 @@
     var list = data && Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : null);
     if (!list) { showToast('Это не файл копии сайта'); return; }
     var added = 0, same = 0, changed = 0;
-    list.filter(function (x) { return x && typeof x === 'object' && typeof x.id === 'number' && (x.type === 'note' || x.type === 'task'); })
+    list.filter(validRecord)
       .map(upgrade).forEach(function (x) {
         var mine = findItem(x.id);
         if (mine) {
@@ -1120,7 +1169,7 @@
     items.sort(function (a, b) { return b.id - a.id; });
     if (Array.isArray(data.trash)) {
       data.trash.forEach(function (r) {
-        if (!r || !r.item || typeof r.item.id !== 'number' || findItem(r.item.id)) return;
+        if (!r || !validRecord(r.item) || findItem(r.item.id)) return;
         if (trash.some(function (t) { return t.item.id === r.item.id; })) return;
         trash.push({ item: r.item, deleted: Number(r.deleted) || Date.now() });
       });
@@ -1235,7 +1284,7 @@
     var mode = el('sort').value;
     if (mode === 'upd') return (b.updated || b.id) - (a.updated || a.id);
     if (mode === 'old') return a.id - b.id;
-    if (mode === 'abc') return a.title.localeCompare(b.title, 'ru');
+    if (mode === 'abc') return a.title.localeCompare(b.title, 'ru', { numeric: true, sensitivity: 'base' });   // «Задача 2» раньше «Задача 10»
     if (mode === 'due' && tab === 'task') {
       // со сроком — по дате, без срока — в конце
       if (a.due && b.due) return a.due < b.due ? -1 : (a.due > b.due ? 1 : b.id - a.id);
@@ -1395,7 +1444,12 @@
     el('shown').textContent = 'Показано: ' + shown.length + ' из ' + total + (isTask && lateCount ? ' · просрочено: ' + lateCount : '');
     if (shown.length === 0) {
       list.className = '';
-      list.innerHTML = '<div class="empty">Ничего не найдено.</div>';
+      var why = 'Ничего не найдено.';
+      if (isTask && !el('search').value.trim() && !el('catFilter').value) {
+        why = { today: 'На сегодня задач нет.', star: 'Важных задач нет. Отметьте задачу звёздочкой ☆ справа.',
+          late: 'Просроченных задач нет.', done: 'Выполненных задач пока нет.' }[taskFilter] || why;
+      }
+      list.innerHTML = '<div class="empty">' + why + '</div>';
       return;
     }
     if (isTask && taskFilter !== 'done') {
@@ -1452,7 +1506,8 @@
     tabState[tab].search = el('search').value;
     resetLimit();
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(render, items.length > 300 ? 150 : 0);   // при большом списке ждём, пока допишут
+    if (items.length > 300) searchTimer = setTimeout(render, 150);   // при большом списке ждём, пока допишут
+    else render();
   };
   el('catFilter').onchange = function () { tabState[tab].tag = el('catFilter').value; resetLimit(); render(); };
   el('sort').onchange = function () {
@@ -1516,7 +1571,7 @@
   });
   el('trashBtn').onclick = openTrash;
   el('trashBack').onclick = closeTrash;
-  el('trash').addEventListener('click', function (e) { if (e.target === el('trash')) closeTrash(); });
+  el('trash').addEventListener('click', function (e) { if (e.target === el('trash') && !justOpened()) closeTrash(); });
   el('trashList').addEventListener('click', function (e) {
     var row = e.target.closest('[data-tid]');
     if (!row) return;
@@ -1662,7 +1717,10 @@
   });
   el('due').addEventListener('input', updateQuick);
   el('due').addEventListener('change', updateQuick);
-  el('editor').addEventListener('click', function (e) { if (e.target === el('editor')) closeEditor(); });
+  // второй щелчок двойного клика по кнопке не должен сразу закрыть только что открытое окно
+  var openedAt = 0;
+  function justOpened() { return Date.now() - openedAt < 500; }
+  el('editor').addEventListener('click', function (e) { if (e.target === el('editor') && !justOpened()) closeEditor(); });
   // высота поля «Текст» подстраивается под написанное
   function fitText() {
     var t = el('text');
@@ -1696,12 +1754,32 @@
   // нажатие на подсказку не должно уводить курсор из поля
   el('tagSuggest').addEventListener('mousedown', function (e) { e.preventDefault(); });
   el('tagSuggest').addEventListener('click', function (e) {
+    var f = e.target.closest('[data-forget]');
+    if (f) {
+      delete myTags[f.getAttribute('data-forget')];
+      saveSetting(TAGS_KEY, JSON.stringify(myTags));
+      renderSuggest();
+      el('tagInput').focus();
+      return;
+    }
     var b = e.target.closest('[data-tag]');
     if (b) addTag(b.getAttribute('data-tag'));
   });
   el('selTags').addEventListener('click', function (e) {
     var b = e.target.closest('[data-rm]');
     if (b) removeTag(b.getAttribute('data-rm'));
+  });
+  // Tab внутри открытого окна ходит по кругу и не уходит на страницу под окном
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var box = el('editor').classList.contains('open') ? el('editor') : (el('trash').classList.contains('open') ? el('trash') : null);
+    if (!box) return;
+    var f = [].filter.call(box.querySelectorAll('button, input:not([type=hidden]), textarea, select, a[href]'), function (x) { return x.offsetParent && !x.disabled; });
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    else if (!box.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !el('cal').hidden) { closeCal(); return; }
@@ -1725,6 +1803,15 @@
     }
   })();
   setTheme(document.documentElement.getAttribute('data-theme'));
+  // пока тему не выбрали кнопкой, следуем за системой (телефон сам переключает день/ночь)
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    var follow = function () {
+      var saved = loadSetting(THEME_KEY);
+      if (saved !== 'dark' && saved !== 'light') setTheme(mq.matches ? 'dark' : 'light');
+    };
+    if (mq.addEventListener) mq.addEventListener('change', follow); else if (mq.addListener) mq.addListener(follow);
+  }
   el('themeBtn').onclick = function () {
     var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     setTheme(next);
