@@ -301,6 +301,35 @@
   #themeBtn:hover { background: rgba(255, 255, 255, .2); color: #fff; border-color: #fff; }
 
   .due { white-space: nowrap; }
+  /* ====== Закрепление, важное, ссылки, повтор, корзина ====== */
+  #pinBtn { background: transparent; color: var(--muted); border: 1px solid var(--field-line); border-radius: 16px; padding: 6px 12px; font-size: 14px; }
+  #pinBtn:hover { color: var(--text); border-color: var(--accent); }
+  #pinBtn.on { background: #fff3c4; color: #7a5200; border-color: #f2c94c; }
+  [data-theme=dark] #pinBtn.on { background: #3d3212; color: #ffd66b; border-color: #8a6d1d; }
+  .pin { position: absolute; top: 10px; right: 12px; font-size: 14px; }
+  .card { position: relative; }
+  .card.pinned .title { padding-right: 22px; }
+  .star { background: transparent; border: none; padding: 0 2px; font-size: 20px; line-height: 1; color: var(--muted); opacity: .45; flex-shrink: 0; }
+  .star:hover { opacity: 1; color: #e0a800; }
+  .star.on { color: #f0b400; opacity: 1; }
+  .card a, .sub a { color: #2f62e8; text-decoration: underline; overflow-wrap: anywhere; }
+  [data-theme=dark] .card a, [data-theme=dark] .sub a { color: #8fb0ff; }
+  .rep { color: var(--muted); white-space: nowrap; }
+  #repWrap { margin-top: 8px; }
+  .replabel { font-size: 13px; color: var(--muted); margin-right: 2px; }
+  .chips .cnt { opacity: .7; font-size: 13px; }
+  .chips .cnt:empty { display: none; }
+  #trashList .row { display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  #trashList .row .what { flex: 1; min-width: 0; }
+  #trashList .row .what b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  #trashList .row .what small { color: var(--muted); font-size: 12px; }
+  #trashList .row button { background: transparent; border: 1px solid var(--field-line); color: var(--text); border-radius: 12px; padding: 5px 10px; font-size: 13px; white-space: nowrap; }
+  #trashList .row button.restore { border-color: var(--accent); }
+  #trashList .row button.kill { color: var(--danger); border-color: var(--danger); }
+  #trashClear { background: transparent; color: var(--danger); border-color: var(--danger); }
+  #trashConfirm { display: none; width: 100%; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--line); }
+  #trashYes { background: var(--danger); color: #fff; }
+  #trashNo { background: transparent; color: var(--text); border-color: var(--field-line); }
   /* Свёрнутые выполненные задачи */
   #doneToggle { align-self: flex-start; background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 16px; padding: 6px 14px; font-size: 14px; margin: 6px 0 2px; }
   #doneToggle:hover { color: var(--text); border-color: var(--accent); }
@@ -311,7 +340,7 @@
   /* Всплывающая строка «Запись удалена · Вернуть» */
   #toast { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 30px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
     background: #1f2340; color: #fff; border-radius: 14px; padding: 10px 10px 10px 16px; display: flex; gap: 14px; align-items: center; z-index: 50;
-    box-shadow: 0 10px 30px rgba(0,0,0,.3); max-width: calc(100% - 32px); font-size: 15px; }
+    box-shadow: 0 10px 30px rgba(0,0,0,.3); width: max-content; max-width: calc(100vw - 32px); font-size: 15px; }
   #toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
   #toast:not(:has(button)) { padding-right: 16px; }
   #toast button { background: #7c3aed; color: #fff; border: none; border-radius: 10px; padding: 6px 14px; font-weight: 600; }
@@ -350,6 +379,7 @@
     <select id="catFilter" aria-label="Хэштег"><option value="">Все хэштеги</option></select>
     <select id="sort" aria-label="Сортировка">
       <option value="new">Сначала новые</option>
+      <option value="upd">Недавно изменённые</option>
       <option value="old">Сначала старые</option>
       <option value="due">По сроку</option>
       <option value="abc">По алфавиту</option>
@@ -359,9 +389,10 @@
   <!-- Фильтры только для задач -->
   <div class="chips" id="taskFilters">
     <button type="button" data-f="all" class="active">Все</button>
-    <button type="button" data-f="open">Невыполненные</button>
+    <button type="button" data-f="today">Сегодня <span class="cnt" id="cntToday"></span></button>
+    <button type="button" data-f="star">★ Важные <span class="cnt" id="cntStar"></span></button>
+    <button type="button" data-f="late">Просроченные <span class="cnt" id="cntLate"></span></button>
     <button type="button" data-f="done">Выполненные</button>
-    <button type="button" data-f="late">Просроченные</button>
   </div>
 
   <div class="addrow">
@@ -376,10 +407,31 @@
     <button type="button" id="exportBtn">Скачать копию</button>
     <button type="button" id="importBtn">Загрузить из файла</button>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
+    <button type="button" id="trashBtn">🗑 Корзина <span id="trashNum"></span></button>
   </div>
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Корзина: удалённое хранится 30 дней -->
+<div class="overlay" id="trash" role="dialog" aria-modal="true" aria-labelledby="trashTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <button type="button" id="trashBack">← Назад</button>
+      <h2 id="trashTitle">Корзина</h2>
+    </div>
+    <div class="hint" style="margin:-6px 0 12px">Удалённые заметки и задачи хранятся здесь 30 дней, потом удаляются сами.</div>
+    <div id="trashList"></div>
+    <div class="sheet-foot" id="trashFoot">
+      <button type="button" id="trashClear">Очистить корзину</button>
+      <div id="trashConfirm">
+        <span>Удалить всё из корзины навсегда?</span>
+        <button type="button" id="trashYes">Да, удалить</button>
+        <button type="button" id="trashNo">Отмена</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Окно добавления и изменения записи -->
 <div class="overlay" id="editor" role="dialog" aria-modal="true" aria-labelledby="edTitle">
@@ -387,6 +439,7 @@
     <div class="sheet-head">
       <button type="button" id="backBtn">← Назад</button>
       <h2 id="edTitle">Новая заметка</h2>
+      <button type="button" id="pinBtn" aria-pressed="false">📌 Закрепить</button>
     </div>
     <input type="text" id="title" placeholder="Заголовок" maxlength="120" aria-label="Заголовок">
     <div id="error">Введите заголовок.</div>
@@ -407,6 +460,13 @@
         <button type="button" data-due="">Без срока</button>
       </div>
       <div id="cal" role="dialog" aria-label="Выбор даты" hidden></div>
+      <div class="quick" id="repWrap">
+        <span class="replabel">↻ Повтор:</span>
+        <button type="button" data-rep="">Нет</button>
+        <button type="button" data-rep="day">Каждый день</button>
+        <button type="button" data-rep="week">Каждую неделю</button>
+        <button type="button" data-rep="month">Каждый месяц</button>
+      </div>
     </div>
     <div class="label">Хэштеги</div>
     <div class="tagchips">
@@ -519,6 +579,11 @@
 
   // Запись из старой версии: категорию превращаем в хэштег
   function upgrade(x) {
+    // необязательные поля: храним, только если они включены
+    if (x.pinned !== true) delete x.pinned;
+    if (x.star !== true) delete x.star;
+    if (['day', 'week', 'month'].indexOf(x.repeat) === -1) delete x.repeat;
+    if (typeof x.updated !== 'number') delete x.updated;
     if (!Array.isArray(x.tags)) {
       var t = x.category ? cleanTag(x.category) : '';
       x.tags = t ? [t] : [];
@@ -660,7 +725,10 @@
     renderSubs();
     editTags = item ? item.tags.slice() : (el('catFilter').value ? [el('catFilter').value] : []);
     closeTagInput();
-    el('due').value = item && item.due ? item.due : '';
+    el('due').value = item && item.due ? item.due : (!item && isTask && taskFilter === 'today' ? todayStr() : '');
+    editRepeat = item && item.repeat ? item.repeat : '';
+    editPin = item ? !!(isTask ? item.star : item.pinned) : (isTask && taskFilter === 'star');
+    updatePin();
     closeCal();
     el('dueWrap').style.display = isTask ? 'block' : 'none';
     updateQuick();
@@ -810,19 +878,25 @@
       tags: editTags.slice(),
       due: editType === 'task' ? el('due').value : ''
     };
+    var rep = isTask && data.due ? editRepeat : '';
 
     if (editId) {
       var item = findItem(editId);
       if (item) {
+        var before = JSON.stringify([item.title, item.text, item.tags, item.due, item.subtasks.map(function (s) { return [s.text, s.done]; }), item.repeat || '']);
+        var after = JSON.stringify([data.title, data.text, data.tags, data.due, data.subtasks.map(function (s) { return [s.text, s.done]; }), rep]);
+        if (before !== after) item.updated = Date.now();   // запоминаем, когда меняли
         item.title = data.title;
         item.text = data.text;
         item.tags = data.tags;
         item.due = data.due;
         item.subtasks = data.subtasks;
+        setFlags(item, editPin, rep);
         if (subs.length) item.done = allDone;   // все пункты отмечены — задача выполнена
+        if (item.done && item.repeat) nextRepeat(item);
       }
     } else {
-      items.unshift({
+      var fresh = {
         id: Date.now(),
         type: editType,
         title: data.title,
@@ -832,11 +906,105 @@
         done: allDone,
         created: new Date().toLocaleDateString('ru-RU'),
         due: data.due
-      });
+      };
+      setFlags(fresh, editPin, rep);
+      items.unshift(fresh);
     }
     save();
     closeEditor();
     render();
+  }
+
+  // Закрепление (заметки) и «Важное» (задачи) — одна кнопка в окне, смысл один: запись наверху
+  var editPin = false;
+  var editRepeat = '';
+  function setFlags(item, pin, rep) {
+    var key = item.type === 'task' ? 'star' : 'pinned';
+    if (pin) item[key] = true; else delete item[key];
+    if (item.type === 'task' && rep) item.repeat = rep; else delete item.repeat;
+  }
+  function updatePin() {
+    var isTask = editType === 'task';
+    el('pinBtn').classList.toggle('on', editPin);
+    el('pinBtn').setAttribute('aria-pressed', editPin ? 'true' : 'false');
+    el('pinBtn').textContent = isTask ? (editPin ? '★ Важная' : '☆ Важная') : (editPin ? '📌 Закреплена' : '📌 Закрепить');
+  }
+
+  // ====== ПОВТОР ======
+  var REP_WORD = { day: 'каждый день', week: 'каждую неделю', month: 'каждый месяц' };
+  // Следующая дата: шагаем от срока, пока не окажемся после сегодняшнего дня
+  function nextDate(due, rep) {
+    var p = due.split('-'), y = +p[0], m = +p[1] - 1, day = +p[2];
+    var today = todayStr(), d, k = 0, s;
+    do {
+      k++;
+      if (rep === 'day') d = new Date(y, m, day + k);
+      else if (rep === 'week') d = new Date(y, m, day + 7 * k);
+      else {
+        var last = new Date(y, m + k + 1, 0).getDate();   // 31-е в коротком месяце -> последний день
+        d = new Date(y, m + k, Math.min(day, last));
+      }
+      s = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    } while (s <= today && k < 5000);
+    return s;
+  }
+  // Повторяющуюся задачу не закрываем, а переносим на следующий раз
+  function nextRepeat(item) {
+    var was = { due: item.due, subs: item.subtasks.map(function (s) { return s.done; }) };
+    item.due = nextDate(item.due, item.repeat);
+    item.done = false;
+    item.subtasks.forEach(function (s) { s.done = false; delete s.auto; });
+    showToast('Готово. Следующий раз: ' + showDate(item.due), 'Отменить', function () {
+      item.due = was.due;
+      item.subtasks.forEach(function (s, i) { s.done = !!was.subs[i]; });
+      save();
+      render();
+    });
+  }
+
+  // ====== КОРЗИНА ======
+  var TRASH_KEY = 'notes_tasks_trash';
+  var TRASH_DAYS = 30;
+  var trash = loadTrash();
+  function loadTrash() {
+    var t = [];
+    try { t = JSON.parse(localStorage.getItem(TRASH_KEY)) || []; } catch (e) { t = []; }
+    if (!Array.isArray(t)) t = [];
+    var limit = Date.now() - TRASH_DAYS * 86400000;   // старше 30 дней — удаляем насовсем
+    return t.filter(function (r) { return r && r.item && typeof r.item.id === 'number' && r.deleted > limit; })
+      .map(function (r) { return { item: upgrade(r.item), deleted: r.deleted }; });
+  }
+  function saveTrash() { saveSetting(TRASH_KEY, JSON.stringify(trash)); }
+  function restoreFromTrash(id) {
+    var r = null;
+    trash = trash.filter(function (x) { if (x.item.id === id) { r = x; return false; } return true; });
+    if (r && !findItem(id)) items.push(r.item);
+    saveTrash(); save(); render();
+    if (el('trash').classList.contains('open')) renderTrash();
+    return r;
+  }
+  function renderTrash() {
+    trash = loadTrash();
+    var list = trash.slice().sort(function (a, b) { return b.deleted - a.deleted; });
+    el('trashList').innerHTML = list.length ? list.map(function (r) {
+      var left = TRASH_DAYS - Math.floor((Date.now() - r.deleted) / 86400000);
+      return '<div class="row" data-tid="' + r.item.id + '"><span>' + (r.item.type === 'task' ? '☑' : '📝') + '</span>' +
+        '<div class="what"><b>' + esc(r.item.title) + '</b><small>' + (r.item.type === 'task' ? 'Задача' : 'Заметка') +
+        ' · удалится через ' + daysWord(Math.max(left, 1)) + '</small></div>' +
+        '<button type="button" class="restore">Вернуть</button><button type="button" class="kill">Удалить навсегда</button></div>';
+    }).join('') : '<div class="empty" style="padding:30px 10px">Корзина пуста.</div>';
+    el('trashFoot').style.display = list.length ? 'flex' : 'none';
+    el('trashConfirm').style.display = 'none';
+  }
+  function openTrash() {
+    renderTrash();
+    el('trash').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    el('trashBack').focus();
+  }
+  function closeTrash() {
+    el('trash').classList.remove('open');
+    document.body.style.overflow = '';
   }
 
   // Удаление: сначала спрашиваем, потом удаляем
@@ -849,11 +1017,14 @@
     items.forEach(function (x, i) { if (x.id === id) pos = i; });
     var gone = pos >= 0 ? items[pos] : null;
     items = items.filter(function (x) { return x.id !== id; });
+    if (gone) { trash.push({ item: gone, deleted: Date.now() }); saveTrash(); }   // сначала в корзину
     save();
     closeEditor();
     render();
     if (gone) {
-      showToast((gone.type === 'task' ? 'Задача удалена' : 'Заметка удалена'), 'Вернуть', function () {
+      showToast((gone.type === 'task' ? 'Задача' : 'Заметка') + ' в корзине', 'Вернуть', function () {
+        trash = trash.filter(function (r) { return r.item.id !== gone.id; });
+        saveTrash();
         if (findItem(gone.id)) return;
         items.splice(Math.min(pos, items.length), 0, gone);
         save();
@@ -878,7 +1049,7 @@
   // Скачать: все записи, хэштеги и цвета в один файл .json
   function exportData() {
     var data = { app: 'zadachi-i-zametki', version: 1, saved: new Date().toISOString(),
-      items: items, tags: myTags, colors: tagColors || {} };
+      items: items, tags: myTags, colors: tagColors || {}, trash: trash };
     var blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
     var a = document.createElement('a');
     var d = new Date();
@@ -907,6 +1078,15 @@
         items.push(x); added++;
       });
     items.sort(function (a, b) { return b.id - a.id; });
+    if (Array.isArray(data.trash)) {
+      data.trash.forEach(function (r) {
+        if (!r || !r.item || typeof r.item.id !== 'number' || findItem(r.item.id)) return;
+        if (trash.some(function (t) { return t.item.id === r.item.id; })) return;
+        trash.push({ item: r.item, deleted: Number(r.deleted) || Date.now() });
+      });
+      saveTrash();
+      trash = loadTrash();
+    }
     if (data.tags && typeof data.tags === 'object') {
       Object.keys(data.tags).forEach(function (t) { if (!myTags[t]) myTags[t] = data.tags[t]; });
       saveSetting(TAGS_KEY, JSON.stringify(myTags));
@@ -929,6 +1109,7 @@
     var item = findItem(id);
     if (!item) return;
     item.done = !item.done;
+    if (item.done && item.repeat && item.due) { nextRepeat(item); save(); render(); return; }
     var marked = item.subtasks.some(function (s) { return s.auto; });
     item.subtasks.forEach(function (s) {
       if (item.done) {
@@ -949,6 +1130,16 @@
     item.subtasks[i].done = !item.subtasks[i].done;
     delete item.subtasks[i].auto;
     item.done = item.subtasks.every(function (s) { return s.done; });
+    if (item.done && item.repeat && item.due) nextRepeat(item);
+    save();
+    render();
+  }
+
+  // Звёздочка «Важная» прямо в списке задач
+  function toggleStar(id) {
+    var item = findItem(id);
+    if (!item) return;
+    if (item.star) delete item.star; else item.star = true;
     save();
     render();
   }
@@ -976,7 +1167,8 @@
   function matches(x) {
     if (x.type !== tab) return false;
     if (tab === 'task') {
-      if (taskFilter === 'open' && x.done) return false;
+      if (taskFilter === 'today' && !isToday(x)) return false;
+      if (taskFilter === 'star' && !x.star) return false;
       if (taskFilter === 'done' && !x.done) return false;
       if (taskFilter === 'late' && !isLate(x)) return false;
     }
@@ -988,8 +1180,17 @@
     return true;
   }
 
+  // «Сегодня»: невыполненные со сроком сегодня или раньше
+  function isToday(x) {
+    return x.type === 'task' && !x.done && !!x.due && x.due <= todayStr();
+  }
+
   function compare(a, b) {
+    // закреплённые заметки и важные задачи всегда наверху
+    var pa = a.pinned || a.star ? 1 : 0, pb = b.pinned || b.star ? 1 : 0;
+    if (pa !== pb) return pb - pa;
     var mode = el('sort').value;
+    if (mode === 'upd') return (b.updated || b.id) - (a.updated || a.id);
     if (mode === 'old') return a.id - b.id;
     if (mode === 'abc') return a.title.localeCompare(b.title, 'ru');
     if (mode === 'due' && tab === 'task') {
@@ -1021,11 +1222,25 @@
     return x.tags.length ? ' ' + tagColor(x.tags[0]) : ' notag';
   }
 
+  // Ссылки в тексте делаем нажимаемыми (текст уже обезврежен через esc)
+  function linkify(safe) {
+    // адрес обрывается на пробеле и на кавычках/скобках, которые esc превратил в &quot; &#39; &lt; &gt;
+    return safe.replace(/https?:\/\/(?:(?!&quot;|&#39;|&lt;|&gt;)[^\s<>"'])+/g, function (u) {
+      var tail = (u.match(/[.,;:!?)\]]+$/) || [''])[0];
+      u = u.slice(0, u.length - tail.length);
+      return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>' + tail;
+    });
+  }
+  function dayOf(ms) { return new Date(ms).toLocaleDateString('ru-RU'); }
+
   function noteHtml(x) {
-    var html = '<div class="card' + stripe(x) + '" tabindex="0" role="button" data-id="' + x.id + '">';
+    var html = '<div class="card' + stripe(x) + (x.pinned ? ' pinned' : '') + '" tabindex="0" role="button" data-id="' + x.id + '">';
+    if (x.pinned) html += '<span class="pin" title="Закреплена">📌</span>';
     html += '<div class="title">' + esc(x.title) + '</div>';
-    if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
-    html += '<div class="meta"><span>' + esc(x.created || '') + '</span>' + tagsHtml(x);
+    if (x.text) html += '<div class="text">' + linkify(esc(x.text)) + '</div>';
+    var changed = x.updated && dayOf(x.updated) !== x.created;
+    html += '<div class="meta"><span' + (changed ? ' title="Создана ' + esc(x.created || '') + '"' : '') + '>' +
+      (changed ? 'изм. ' + dayOf(x.updated) : esc(x.created || '')) + '</span>' + tagsHtml(x);
     html += '</div></div>';
     return html;
   }
@@ -1039,7 +1254,7 @@
     if (x.subtasks.length) {
       var SHOW = 6;
       html += '<ul class="subs">' + x.subtasks.slice(0, SHOW).map(function (s, i) {
-        return '<li><label class="sub' + (s.done ? ' done' : '') + '"><input type="checkbox" data-sub="' + i + '"' + (s.done ? ' checked' : '') + '><span>' + esc(s.text) + '</span></label></li>';
+        return '<li><label class="sub' + (s.done ? ' done' : '') + '"><input type="checkbox" data-sub="' + i + '"' + (s.done ? ' checked' : '') + '><span>' + linkify(esc(s.text)) + '</span></label></li>';
       }).join('') + '</ul>';
       if (x.subtasks.length > SHOW) html += '<div class="more">и ещё ' + (x.subtasks.length - SHOW) + '…</div>';
     }
@@ -1057,6 +1272,7 @@
       else if (!x.done && x.due === dayStr(1)) html += '<span class="due tomorrow">Срок завтра</span>';
       else html += '<span class="due">Срок: ' + showDate(x.due) + '</span>';
     }
+    if (x.repeat) html += '<span class="rep" title="Повторяется">↻ ' + REP_WORD[x.repeat] + '</span>';
     if (x.done) html += '<span>Выполнено</span>';
     html += '</div></div>';
     // справа незаметно: сколько дней осталось или сколько прошло
@@ -1065,6 +1281,8 @@
       if (n >= 2) html += '<span class="left">через ' + daysWord(n) + '</span>';
       else if (n < 0) html += '<span class="left late">' + daysWord(-n) + ' назад</span>';
     }
+    html += '<button type="button" class="star' + (x.star ? ' on' : '') + '" aria-pressed="' + !!x.star + '" title="' +
+      (x.star ? 'Убрать из важных' : 'Отметить важной') + '" aria-label="Важная">' + (x.star ? '★' : '☆') + '</button>';
     html += '</div>';
     return html;
   }
@@ -1090,6 +1308,17 @@
     });
     el('numNotes').textContent = notes ? '(' + notes + ')' : '';
     el('numTasks').textContent = tasks ? '(' + open + ' из ' + tasks + ')' : '';
+    var cT = 0, cS = 0, cL = 0;
+    items.forEach(function (x) {
+      if (x.type !== 'task' || x.done) return;
+      if (isToday(x)) cT++;
+      if (x.star) cS++;
+      if (isLate(x)) cL++;
+    });
+    el('cntToday').textContent = cT || '';
+    el('cntStar').textContent = cS || '';
+    el('cntLate').textContent = cL || '';
+    el('trashNum').textContent = trash.length ? '(' + trash.length + ')' : '';
 
     // отбираем, сортируем; выполненные задачи — вниз
     var total = isTask ? tasks : notes;
@@ -1171,6 +1400,9 @@
 
   // Нажатие на заметку или задачу открывает её; галочка — отмечает выполнение
   el('list').addEventListener('click', function (e) {
+    if (e.target.closest('a')) return;   // ссылка открывается сама, запись не открываем
+    var st = e.target.closest('.star');
+    if (st) { toggleStar(Number(st.closest('[data-id]').getAttribute('data-id'))); return; }
     if (e.target.closest('#doneToggle')) {
       showDone = !showDone;
       saveSetting('notes_tasks_showdone', showDone ? '1' : '0');
@@ -1209,6 +1441,32 @@
     r.onload = function () { importData(String(r.result)); };
     r.readAsText(f);
   };
+  el('pinBtn').onclick = function () { editPin = !editPin; updatePin(); };
+  document.querySelectorAll('#repWrap button').forEach(function (b) {
+    b.onclick = function () {
+      editRepeat = b.getAttribute('data-rep');
+      if (editRepeat && !el('due').value) el('due').value = todayStr();   // повтору нужен срок
+      updateQuick();
+    };
+  });
+  el('trashBtn').onclick = openTrash;
+  el('trashBack').onclick = closeTrash;
+  el('trash').addEventListener('click', function (e) { if (e.target === el('trash')) closeTrash(); });
+  el('trashList').addEventListener('click', function (e) {
+    var row = e.target.closest('[data-tid]');
+    if (!row) return;
+    var id = Number(row.getAttribute('data-tid'));
+    if (e.target.closest('.restore')) {
+      var r = restoreFromTrash(id);
+      if (r) showToast((r.item.type === 'task' ? 'Задача' : 'Заметка') + ' возвращена');
+    } else if (e.target.closest('.kill')) {
+      trash = trash.filter(function (x) { return x.item.id !== id; });
+      saveTrash(); renderTrash(); render();
+    }
+  });
+  el('trashClear').onclick = function () { el('trashConfirm').style.display = 'flex'; };
+  el('trashNo').onclick = function () { el('trashConfirm').style.display = 'none'; };
+  el('trashYes').onclick = function () { trash = []; saveTrash(); renderTrash(); render(); };
   el('saveBtn').onclick = saveEditor;
   el('backBtn').onclick = closeEditor;
   el('deleteBtn').onclick = askDelete;
@@ -1311,6 +1569,12 @@
     var v = el('due').value;
     el('dueLabel').textContent = dueLabel(v);
     el('dueBtn').classList.toggle('set', !!v);
+    if (!v) editRepeat = '';   // без срока повтора нет
+    document.querySelectorAll('#repWrap button').forEach(function (b) {
+      var on = b.getAttribute('data-rep') === editRepeat;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
     document.querySelectorAll('#dueWrap .quick button[data-due]').forEach(function (b) {
       var days = b.getAttribute('data-due');
       var match = days === '' ? v === '' : v === dayStr(Number(days));
@@ -1371,13 +1635,14 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !el('cal').hidden) { closeCal(); return; }
     if (e.key === 'Escape' && el('editor').classList.contains('open')) closeEditor();
+    else if (e.key === 'Escape' && el('trash').classList.contains('open')) closeTrash();
   });
 
   // Восстанавливаем вкладку, сортировку и тему
   tab = loadSetting(TAB_KEY) === 'task' ? 'task' : 'note';
   // Сортировка: новая запись — {note:…, task:…}; старая версия хранила одну строку на обе вкладки
   (function () {
-    var ok = function (v) { return ['new', 'old', 'due', 'abc'].indexOf(v) !== -1; };
+    var ok = function (v) { return ['new', 'upd', 'old', 'due', 'abc'].indexOf(v) !== -1; };
     var raw = loadSetting(SORT_KEY), saved = null;
     try { saved = JSON.parse(raw); } catch (e) { saved = raw; }
     if (saved && typeof saved === 'object') {
@@ -1399,6 +1664,7 @@
   window.addEventListener('storage', function (e) {
     if (e.key === TAGS_KEY) myTags = loadMyTags();
     if (e.key === COLORS_KEY) { tagColors = loadColors(); render(); }
+    if (e.key === TRASH_KEY) { trash = loadTrash(); render(); if (el('trash').classList.contains('open')) renderTrash(); }
     if (e.key === KEY) {
       items = load();
       if (editId && !findItem(editId)) closeEditor();
