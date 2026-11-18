@@ -33,7 +33,7 @@
     --tag-text: #6b4e00;
     --danger: #c62828;
     --danger-soft: #fdecea;
-    --warn: #a35f00;
+    --warn: #9a5800;
     --warn-soft: #fff1dc;
     --shadow: 0 1px 3px rgba(0, 0, 0, .07);
   }
@@ -88,7 +88,7 @@
   .tabs button { flex: 1; background: transparent; color: var(--muted); font-weight: 600; font-size: 17px; padding: 10px; }
   .tabs button.active { background: var(--accent); color: var(--on-accent); }
   .tabs button:not(.active):hover { color: var(--text); }
-  .tabs .num { font-weight: 400; opacity: .8; }
+  .tabs .num { font-weight: 400; }
 
   /* ---------- Панель: поиск, категории, сортировка ---------- */
   .tools { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -205,7 +205,7 @@
   #saveBtn:hover { background: var(--accent-hover); }
   #deleteBtn { background: transparent; color: var(--danger); border-color: var(--danger); margin-left: auto; }
   #confirm { display: none; width: 100%; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--line); }
-  #yesDel { background: var(--danger); color: #fff; }
+  #yesDel { background: #c62828; color: #fff; }
   #noDel { background: transparent; color: var(--text); border-color: var(--field-line); }
 
   /* ====== Оформление: перелив синий → фиолетовый, цвета хэштегов (вариант J2) ====== */
@@ -255,12 +255,13 @@
   .cal-head button:hover { background: var(--line); }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
   .cal-grid .wd { font-size: 12px; color: var(--muted); padding: 4px 0; }
-  .cal-grid .wd.we { color: #e0527c; }
+  .cal-grid .wd.we { color: #c9365f; }
+  [data-theme=dark] .cal-grid .wd.we, [data-theme=dark] .cal-grid button.we { color: #ff7a9c; }
   .cal-grid button, .cal-head button { border: none; }
   .cal-grid button { background: transparent; color: var(--text); padding: 0; height: 34px; border-radius: 10px; font-size: 14px; }
   .cal-grid button:hover { background: var(--line); }
-  .cal-grid button.other { color: var(--muted); opacity: .45; }
-  .cal-grid button.we { color: #e0527c; }
+  .cal-grid button.other { color: var(--muted); opacity: .7; }
+  .cal-grid button.we { color: #c9365f; }
   .cal-grid button.today { box-shadow: inset 0 0 0 1.5px #7c3aed; font-weight: 600; }
   .cal-grid button.sel, .cal-grid button.sel:hover { background: linear-gradient(120deg,#2f62e8,#7c3aed); color: #fff; opacity: 1; font-weight: 600; }
   /* ====== Выбранная кнопка срока ====== */
@@ -293,30 +294,17 @@
   .card.notag, .task.notag { box-shadow: inset 3px 0 0 #94a3b8; }
   [data-theme=dark] .card.notag, [data-theme=dark] .task.notag { box-shadow: inset 3px 0 0 #64748b, 0 0 18px rgba(100,116,139,.12); }
   .task .left { margin-left: auto; align-self: flex-start; padding-top: 3px; font-size: 13px; color: var(--muted); white-space: nowrap; }
-  .task .left.late { color: var(--danger); opacity: .8; }
+  .task .left.late { color: var(--danger); }
   .due.tomorrow { background: #ece4ff; border-color: #c4b0ff; color: #5a2ab4; }
   [data-theme="dark"] .due.tomorrow { background: #2c1f4d; border-color: #5b45a0; color: #c8b2ff; }
 
   /* Кнопка темы на шапке с переливом: при наведении не белеет, текст остаётся видно */
-  #themeBtn:hover { background: rgba(255, 255, 255, .2); color: #fff; border-color: #fff; }
+  #themeBtn:hover { background: rgba(0, 0, 0, .18); color: #fff; border-color: #fff; }
 
   .due { white-space: nowrap; }
   .forget::after { content: '×'; }
   .forget { margin-left: 6px; padding: 0 4px; border-radius: 8px; color: var(--muted); }
   .forget:hover { background: var(--danger-soft); color: var(--danger); }
-  /* На телефоне кнопки покрупнее, чтобы палец не промахивался */
-  @media (max-width: 600px) {
-    .task input.main { width: 26px; height: 26px; }
-    .task .star { padding: 6px 8px; margin: -6px -8px -6px 0; font-size: 22px; }
-    .sub input { width: 22px; height: 22px; }
-    .sub { padding: 2px 0; }
-    .meta .tag { padding: 3px 10px; }
-    .backup button { padding: 8px 14px; }
-    .chip button { padding: 4px 10px; }
-    .quick button { padding: 7px 12px; }
-    .subrow input[type=checkbox] { width: 24px; height: 24px; }
-    .subrow .rm { padding: 8px 10px; }
-  }
   /* Печать: только сами записи, без кнопок и полей */
   @media print {
     .toprow { background: none !important; color: #000; padding: 0 0 10px; }
@@ -332,7 +320,7 @@
   #moreBtn { grid-column: 1 / -1; align-self: center; justify-self: center; background: transparent; color: var(--text); border: 1px solid var(--field-line); border-radius: 16px; padding: 8px 18px; margin: 4px auto; }
   #moreBtn:hover { border-color: var(--accent); }
   #trashBack { background: transparent; color: var(--text); border-color: var(--field-line); padding: 7px 12px; }
-  #trashList .row button.kill.sure { background: var(--danger); color: #fff; }
+  #trashList .row button.kill.sure { background: #c62828; color: #fff; border-color: #c62828; }
   @media (max-width: 600px) {
     #trash #trashList .row { flex-wrap: wrap; }
     #trash #trashList .row .what { flex: 1 1 calc(100% - 40px); }
@@ -346,15 +334,16 @@
   .pin { position: absolute; top: 10px; right: 12px; font-size: 14px; }
   .card { position: relative; }
   .card.pinned .title { padding-right: 22px; }
-  .star { background: transparent; border: none; padding: 0 2px; font-size: 20px; line-height: 1; color: var(--muted); opacity: .45; flex-shrink: 0; }
+  .star { background: transparent; border: none; padding: 0 2px; font-size: 20px; line-height: 1; color: var(--muted); opacity: .75; flex-shrink: 0; }
   .star:hover { opacity: 1; color: #e0a800; }
-  .star.on { color: #f0b400; opacity: 1; }
+  .star.on { color: #b98000; opacity: 1; }
+  [data-theme=dark] .star.on { color: #f0b400; }
   .card a, .sub a { color: #2f62e8; text-decoration: underline; overflow-wrap: anywhere; }
   [data-theme=dark] .card a, [data-theme=dark] .sub a { color: #8fb0ff; }
   .rep { color: var(--muted); white-space: nowrap; }
   #repWrap { margin-top: 8px; }
   .replabel { font-size: 13px; color: var(--muted); margin-right: 2px; }
-  .chips .cnt { opacity: .7; font-size: 13px; }
+  .chips .cnt { font-size: 13px; }
   .chips .cnt:empty { display: none; }
   #trashList .row { display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
   #trashList .row .what { flex: 1; min-width: 0; }
@@ -365,7 +354,7 @@
   #trashList .row button.kill { color: var(--danger); border-color: var(--danger); }
   #trashClear { background: transparent; color: var(--danger); border-color: var(--danger); }
   #trashConfirm { display: none; width: 100%; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--line); }
-  #trashYes { background: var(--danger); color: #fff; }
+  #trashYes { background: #c62828; color: #fff; }
   #trashNo { background: transparent; color: var(--text); border-color: var(--field-line); }
   /* Свёрнутые выполненные задачи */
   #doneToggle { align-self: flex-start; background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 16px; padding: 6px 14px; font-size: 14px; margin: 6px 0 2px; }
@@ -391,6 +380,33 @@
     .overlay { padding: 0; align-items: stretch; }
     .sheet { max-width: none; border-radius: 0; min-height: 100%; }
     #addBtn { width: 100%; }
+  }
+  @media (max-width: 420px) {
+    .sheet-head h2 { font-size: 18px; }
+  }
+  /* На сенсорном экране (телефон, планшет) всё, что нажимают пальцем, не меньше ~36 px */
+  @media (pointer: coarse) {
+    .task input.main { width: 28px; height: 28px; }
+    .task .star { padding: 8px 10px; margin: -8px -10px -8px 0; font-size: 22px; min-width: 40px; min-height: 40px; }
+    .sub input { width: 22px; height: 22px; }
+    .sub { padding: 5px 0; min-height: 34px; }
+    .meta .tag { padding: 5px 11px; }
+    .tag.more { min-width: 36px; text-align: center; }
+    .backup button { min-height: 38px; padding: 8px 14px; }
+    .chip { padding-top: 2px; padding-bottom: 2px; }
+    .chip button { min-height: 34px; min-width: 34px; padding: 4px 10px; }
+    .quick button, #dueBtn { min-height: 38px; padding: 7px 13px; }
+    #tagSuggest button { min-height: 36px; padding: 6px 13px; }
+    #addTagBtn, #addSubBtn, #pinBtn, #backBtn, #trashBack { min-height: 38px; }
+    .subrow input[type=checkbox] { width: 26px; height: 26px; }
+    .subrow .rm { min-width: 38px; min-height: 38px; }
+    .cal-head button { min-width: 40px; min-height: 40px; }
+    .cal-grid button { height: 40px; }
+    #trashList .row button { min-height: 38px; }
+    #doneToggle, #moreBtn { min-height: 38px; }
+    .chips button, #themeBtn { min-height: 38px; }
+    .meta .tag { padding: 6px 11px; }
+    #toast button { min-height: 36px; }
   }
 </style>
 </head>
@@ -786,6 +802,7 @@
     updateQuick();
     el('deleteBtn').style.display = item ? '' : 'none';
     el('error').style.display = 'none';
+    el('error').textContent = isTask ? 'Напишите, что нужно сделать.' : 'Введите заголовок.';
     el('confirm').style.display = 'none';
 
     el('editor').classList.add('open');
@@ -1080,6 +1097,7 @@
     el('trashConfirm').style.display = 'none';
   }
   function openTrash() {
+    hideToast();   // всплывашка не должна закрывать кнопки корзины
     renderTrash();
     el('trash').classList.add('open');
     openedAt = Date.now();
