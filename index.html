@@ -301,6 +301,18 @@
   #themeBtn:hover { background: rgba(255, 255, 255, .2); color: #fff; border-color: #fff; }
 
   .due { white-space: nowrap; }
+  /* длинный хэштег не вылезает за карточку, обрезается с «…» */
+  .meta .tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+  .chip { max-width: 100%; overflow-wrap: anywhere; }
+  #moreBtn { grid-column: 1 / -1; align-self: center; justify-self: center; background: transparent; color: var(--text); border: 1px solid var(--field-line); border-radius: 16px; padding: 8px 18px; margin: 4px auto; }
+  #moreBtn:hover { border-color: var(--accent); }
+  #trashBack { background: transparent; color: var(--text); border-color: var(--field-line); padding: 7px 12px; }
+  #trashList .row button.kill.sure { background: var(--danger); color: #fff; }
+  @media (max-width: 600px) {
+    #trash #trashList .row { flex-wrap: wrap; }
+    #trash #trashList .row .what { flex: 1 1 calc(100% - 40px); }
+    #trash #trashList .row button { flex: 1; }
+  }
   /* ====== Закрепление, важное, ссылки, повтор, корзина ====== */
   #pinBtn { background: transparent; color: var(--muted); border: 1px solid var(--field-line); border-radius: 16px; padding: 6px 12px; font-size: 14px; }
   #pinBtn:hover { color: var(--text); border-color: var(--accent); }
@@ -518,8 +530,14 @@
   function save() {
     try {
       localStorage.setItem(KEY, JSON.stringify(items));
+      canSave = true;
     } catch (e) {
       canSave = false;
+      // память переполнена — это не то же самое, что запрет на сохранение
+      var full = e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014);
+      el('warning').textContent = full
+        ? 'Память браузера заполнена, последние изменения не сохранились. Скачайте копию (внизу страницы), очистите корзину и удалите ненужное.'
+        : 'Браузер не даёт сохранять данные. Записи пропадут после закрытия страницы.';
     }
     el('warning').style.display = canSave ? 'none' : 'block';
   }
@@ -742,10 +760,17 @@
   }
 
   function closeEditor() {
+    var back = editId;
     el('editor').classList.remove('open');
     document.body.style.overflow = '';
     editId = null;
     tagInputOpen = false;
+    // фокус обратно на карточку, с которой открывали (удобно с клавиатуры)
+    setTimeout(function () {
+      var c = back && document.querySelector('#list [data-id="' + back + '"]');
+      if (c) c.focus({ preventScroll: true });
+      else if (document.activeElement === document.body || !document.activeElement) el('addBtn').focus({ preventScroll: true });
+    }, 0);
   }
 
   // --- пункты задачи в окне ---
@@ -897,7 +922,7 @@
       }
     } else {
       var fresh = {
-        id: Date.now(),
+        id: newId(),
         type: editType,
         title: data.title,
         text: data.text,
@@ -913,6 +938,14 @@
     save();
     closeEditor();
     render();
+  }
+
+  // Номер новой записи: время в миллисекундах, но всегда больше всех прежних (на случай двух записей за одну миллисекунду)
+  function newId() {
+    var max = 0;
+    items.forEach(function (x) { if (x.id > max) max = x.id; });
+    trash.forEach(function (r) { if (r.item.id > max) max = r.item.id; });
+    return Math.max(Date.now(), max + 1);
   }
 
   // Закрепление (заметки) и «Важное» (задачи) — одна кнопка в окне, смысл один: запись наверху
@@ -971,8 +1004,10 @@
     try { t = JSON.parse(localStorage.getItem(TRASH_KEY)) || []; } catch (e) { t = []; }
     if (!Array.isArray(t)) t = [];
     var limit = Date.now() - TRASH_DAYS * 86400000;   // старше 30 дней — удаляем насовсем
-    return t.filter(function (r) { return r && r.item && typeof r.item.id === 'number' && r.deleted > limit; })
+    var kept = t.filter(function (r) { return r && r.item && typeof r.item.id === 'number' && r.deleted > limit; })
       .map(function (r) { return { item: upgrade(r.item), deleted: r.deleted }; });
+    if (kept.length !== t.length) saveSetting(TRASH_KEY, JSON.stringify(kept));   // и из памяти браузера тоже
+    return kept;
   }
   function saveTrash() { saveSetting(TRASH_KEY, JSON.stringify(trash)); }
   function restoreFromTrash(id) {
@@ -1071,10 +1106,15 @@
     try { data = JSON.parse(text); } catch (e) { data = null; }
     var list = data && Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : null);
     if (!list) { showToast('Это не файл копии сайта'); return; }
-    var added = 0, same = 0;
+    var added = 0, same = 0, changed = 0;
     list.filter(function (x) { return x && typeof x === 'object' && typeof x.id === 'number' && (x.type === 'note' || x.type === 'task'); })
       .map(upgrade).forEach(function (x) {
-        if (findItem(x.id)) { same++; return; }
+        var mine = findItem(x.id);
+        if (mine) {
+          // в копии запись новее (её меняли позже) — берём из копии
+          if ((x.updated || 0) > (mine.updated || 0)) { items[items.indexOf(mine)] = x; changed++; } else same++;
+          return;
+        }
         items.push(x); added++;
       });
     items.sort(function (a, b) { return b.id - a.id; });
@@ -1101,7 +1141,7 @@
     }
     save();
     render();
-    showToast('Загружено: добавлено ' + added + ' ' + recWord(added) + (same ? ', ' + same + ' уже были' : ''));
+    showToast('Загружено: добавлено ' + added + ' ' + recWord(added) + (changed ? ', обновлено ' + changed : '') + (same ? ', ' + same + ' уже были' : ''));
   }
 
   // Галочка у задачи: отмечает и все её пункты
@@ -1164,6 +1204,9 @@
     el('catFilter').value = chosen;
   }
 
+  // для поиска: без разницы между большими и маленькими буквами и между е и ё
+  function norm(s) { return String(s).toLowerCase().replace(/ё/g, 'е'); }
+
   function matches(x) {
     if (x.type !== tab) return false;
     if (tab === 'task') {
@@ -1174,9 +1217,9 @@
     }
     var cat = el('catFilter').value;
     if (cat && x.tags.indexOf(cat) === -1) return false;
-    var q = el('search').value.trim().toLowerCase();
+    var q = norm(el('search').value.trim());
     var where = x.title + ' ' + x.text + ' ' + x.subtasks.map(function (s) { return s.text; }).join(' ') + ' #' + x.tags.join(' #');
-    if (q && where.toLowerCase().indexOf(q) === -1) return false;
+    if (q && norm(where).indexOf(q) === -1) return false;
     return true;
   }
 
@@ -1253,7 +1296,11 @@
     if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
     if (x.subtasks.length) {
       var SHOW = 6;
-      html += '<ul class="subs">' + x.subtasks.slice(0, SHOW).map(function (s, i) {
+      // сначала неотмеченные пункты, отмеченные — после них (порядок в окне не меняется)
+      var order = x.subtasks.map(function (s, i) { return i; });
+      order = order.filter(function (i) { return !x.subtasks[i].done; }).concat(order.filter(function (i) { return x.subtasks[i].done; }));
+      html += '<ul class="subs">' + order.slice(0, SHOW).map(function (i) {
+        var s = x.subtasks[i];
         return '<li><label class="sub' + (s.done ? ' done' : '') + '"><input type="checkbox" data-sub="' + i + '"' + (s.done ? ' checked' : '') + '><span>' + linkify(esc(s.text)) + '</span></label></li>';
       }).join('') + '</ul>';
       if (x.subtasks.length > SHOW) html += '<div class="more">и ещё ' + (x.subtasks.length - SHOW) + '…</div>';
@@ -1286,6 +1333,15 @@
     html += '</div>';
     return html;
   }
+
+  // Длинный список выводим частями: так поиск не тормозит даже на тысячах записей
+  var PAGE = 200;
+  var showLimit = PAGE;
+  function moreHtml(total) {
+    if (total <= showLimit) return '';
+    return '<button type="button" id="moreBtn">Показать ещё ' + Math.min(PAGE, total - showLimit) + ' из ' + (total - showLimit) + '</button>';
+  }
+  function resetLimit() { showLimit = PAGE; }
 
   function render() {
     var isTask = tab === 'task';
@@ -1346,7 +1402,7 @@
       // выполненные свёрнуты в строку «Выполненные (N)», чтобы не копились в списке
       var openOnes = shown.filter(function (x) { return !x.done; });
       var doneOnes = shown.filter(function (x) { return x.done; });
-      var html = openOnes.map(taskHtml).join('');
+      var html = openOnes.slice(0, showLimit).map(taskHtml).join('') + moreHtml(openOnes.length);
       if (doneOnes.length) {
         html += '<button type="button" id="doneToggle" aria-expanded="' + showDone + '">' +
           (showDone ? '▴' : '▾') + ' Выполненные (' + doneOnes.length + ')</button>';
@@ -1355,7 +1411,7 @@
       list.innerHTML = html;
       return;
     }
-    list.innerHTML = shown.map(isTask ? taskHtml : noteHtml).join('');
+    list.innerHTML = shown.slice(0, showLimit).map(isTask ? taskHtml : noteHtml).join('') + moreHtml(shown.length);
   }
 
   // ====== 6. ВКЛАДКИ И ТЕМА ======
@@ -1364,6 +1420,7 @@
   function setTab(t) {
     tabState[tab].search = el('search').value;
     tab = t === 'task' ? 'task' : 'note';
+    resetLimit();
     saveSetting(TAB_KEY, tab);
     el('search').value = tabState[tab].search;
     render();
@@ -1384,13 +1441,20 @@
   filterButtons.forEach(function (b) {
     b.onclick = function () {
       taskFilter = b.getAttribute('data-f');
+      resetLimit();
       filterButtons.forEach(function (x) { x.classList.toggle('active', x === b); });
       render();
     };
   });
 
-  el('search').oninput = function () { tabState[tab].search = el('search').value; render(); };
-  el('catFilter').onchange = function () { tabState[tab].tag = el('catFilter').value; render(); };
+  var searchTimer = null;
+  el('search').oninput = function () {
+    tabState[tab].search = el('search').value;
+    resetLimit();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(render, items.length > 300 ? 150 : 0);   // при большом списке ждём, пока допишут
+  };
+  el('catFilter').onchange = function () { tabState[tab].tag = el('catFilter').value; resetLimit(); render(); };
   el('sort').onchange = function () {
     sortPref[tab] = el('sort').value;
     saveSetting(SORT_KEY, JSON.stringify(sortPref));
@@ -1400,6 +1464,7 @@
 
   // Нажатие на заметку или задачу открывает её; галочка — отмечает выполнение
   el('list').addEventListener('click', function (e) {
+    if (e.target.closest('#moreBtn')) { showLimit += PAGE; render(); return; }
     if (e.target.closest('a')) return;   // ссылка открывается сама, запись не открываем
     var st = e.target.closest('.star');
     if (st) { toggleStar(Number(st.closest('[data-id]').getAttribute('data-id'))); return; }
@@ -1427,7 +1492,7 @@
     openEditor(id);
   });
   el('list').addEventListener('keydown', function (e) {
-    if (e.key !== 'Enter' || e.target.matches('input')) return;
+    if (e.key !== 'Enter' || e.target.matches('input, button, a')) return;   // у кнопок и ссылок своё действие
     var box = e.target.closest('[data-id]');
     if (box) openEditor(Number(box.getAttribute('data-id')));
   });
@@ -1460,6 +1525,12 @@
       var r = restoreFromTrash(id);
       if (r) showToast((r.item.type === 'task' ? 'Задача' : 'Заметка') + ' возвращена');
     } else if (e.target.closest('.kill')) {
+      var k = e.target.closest('.kill');
+      if (!k.classList.contains('sure')) {   // первое нажатие — переспрашиваем
+        k.classList.add('sure'); k.textContent = 'Точно удалить?';
+        setTimeout(function () { if (document.body.contains(k)) { k.classList.remove('sure'); k.textContent = 'Удалить навсегда'; } }, 4000);
+        return;
+      }
       trash = trash.filter(function (x) { return x.item.id !== id; });
       saveTrash(); renderTrash(); render();
     }
@@ -1666,11 +1737,28 @@
     if (e.key === COLORS_KEY) { tagColors = loadColors(); render(); }
     if (e.key === TRASH_KEY) { trash = loadTrash(); render(); if (el('trash').classList.contains('open')) renderTrash(); }
     if (e.key === KEY) {
+      var was = editId && findItem(editId) ? JSON.stringify(findItem(editId)) : null;
       items = load();
       if (editId && !findItem(editId)) closeEditor();
+      else if (was && JSON.stringify(findItem(editId)) !== was) {
+        showToast('Эту запись только что изменили в другой вкладке. Если сохранить, останется ваш вариант');
+      }
       render();
     }
   });
+
+  // Наступил новый день, а страница открыта: обновляем «Срок сегодня», «завтра», «Сегодня» и просрочки
+  var shownDay = todayStr();
+  function checkDay() {
+    if (todayStr() !== shownDay) {
+      shownDay = todayStr();
+      trash = loadTrash();
+      render();
+    }
+  }
+  setInterval(checkDay, 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) checkDay(); });
+  window.addEventListener('focus', checkDay);
 
   render();
 </script>
