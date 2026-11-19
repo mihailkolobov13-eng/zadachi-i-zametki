@@ -408,6 +408,8 @@
     .meta .tag { padding: 6px 11px; }
     #toast button { min-height: 36px; }
   }
+  /* градиент тянется и под прозрачную рамку — без цветной полоски по краям кнопок (замечание брата) */
+  button { background-origin: border-box !important; }
 </style>
 </head>
 <body>
@@ -473,7 +475,7 @@
       <button type="button" id="trashBack">← Назад</button>
       <h2 id="trashTitle">Корзина</h2>
     </div>
-    <div class="hint" style="margin:-6px 0 12px">Удалённые заметки и задачи хранятся здесь 30 дней, потом удаляются сами.</div>
+    <div class="hint" style="margin:-6px 0 12px">Удалённые заметки и задачи хранятся здесь 30 дней, потом удаляются навсегда.</div>
     <div id="trashList"></div>
     <div class="sheet-foot" id="trashFoot">
       <button type="button" id="trashClear">Очистить корзину</button>
