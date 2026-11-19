@@ -410,6 +410,8 @@
   }
   /* градиент тянется и под прозрачную рамку — без цветной полоски по краям кнопок (замечание брата) */
   button { background-origin: border-box !important; }
+  /* подсветка записи, которую только что показали */
+  .card.flash, .task.flash { outline: 3px solid #7c3aed; outline-offset: 2px; transition: outline-color .3s; }
 </style>
 </head>
 <body>
@@ -997,9 +999,49 @@
       setFlags(fresh, editPin, rep, true);
       items.unshift(fresh);
     }
+    var savedId = editId || items[0].id;
     save();
     closeEditor();
     render();
+    tellIfHidden(savedId);
+  }
+
+  // Запись сохранили, но её не видно из-за поиска, хэштега или фильтра — говорим об этом и даём показать
+  function tellIfHidden(id) {
+    var x = findItem(id);
+    if (!x || x.type !== tab) return;
+    var word = x.type === 'task' ? 'Задача' : 'Заметка';
+    if (!matches(x)) {
+      var why = [];
+      if (el('search').value.trim()) why.push('поиск');
+      if (el('catFilter').value) why.push('хэштег #' + el('catFilter').value);
+      if (x.type === 'task' && taskFilter !== 'all') {
+        var f = document.querySelector('#taskFilters [data-f="' + taskFilter + '"]');
+        why.push('фильтр «' + (f ? f.firstChild.textContent.trim() : '') + '»');
+      }
+      showToast(word + ' сохранена, но скрыта: ' + why.join(', '), 'Показать', function () { showAll(id); });
+    } else if (x.type === 'task' && x.done && !x.repeat && taskFilter !== 'done' && !showDone) {
+      showToast('Задача выполнена и ушла в «Выполненные»', 'Показать', function () { showDone = true; saveSetting('notes_tasks_showdone', '1'); render(); flash(id); });
+    }
+  }
+  // Сбросить поиск, хэштег и фильтр и подсветить запись
+  function showAll(id) {
+    el('search').value = ''; tabState[tab].search = '';
+    tabState[tab].tag = '';
+    taskFilter = 'all';
+    document.querySelectorAll('#taskFilters button').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-f') === 'all'); });
+    resetLimit();
+    render();
+    var x = findItem(id);
+    if (x && x.done && !showDone) { showDone = true; saveSetting('notes_tasks_showdone', '1'); render(); }
+    flash(id);
+  }
+  function flash(id) {
+    var c = document.querySelector('#list [data-id="' + id + '"]');
+    if (!c) return;
+    c.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    c.classList.add('flash');
+    setTimeout(function () { c.classList.remove('flash'); }, 1600);
   }
 
   // Номер новой записи: время в миллисекундах, но всегда больше всех прежних (на случай двух записей за одну миллисекунду)
@@ -1591,7 +1633,7 @@
   });
   el('trashBtn').onclick = openTrash;
   el('trashBack').onclick = closeTrash;
-  el('trash').addEventListener('click', function (e) { if (e.target === el('trash') && !justOpened()) closeTrash(); });
+  el('trash').addEventListener('click', function (e) { if (e.target === el('trash') && downOn === el('trash') && !justOpened()) closeTrash(); });
   el('trashList').addEventListener('click', function (e) {
     var row = e.target.closest('[data-tid]');
     if (!row) return;
@@ -1740,7 +1782,15 @@
   // второй щелчок двойного клика по кнопке не должен сразу закрыть только что открытое окно
   var openedAt = 0;
   function justOpened() { return Date.now() - openedAt < 500; }
-  el('editor').addEventListener('click', function (e) { if (e.target === el('editor') && !justOpened()) closeEditor(); });
+  // закрываем по клику мимо окна, только если и нажали, и отпустили мимо окна
+  // (иначе кнопка, «уехавшая» из-под пальца, закрывала окно без сохранения)
+  var downOn = null;
+  document.addEventListener('mousedown', function (e) { downOn = e.target; }, true);
+  el('editor').addEventListener('click', function (e) { if (e.target === el('editor') && downOn === el('editor') && !justOpened()) closeEditor(); });
+  // нажатие на кнопки внизу окна не уводит курсор из поля хэштега: подсказки не сворачиваются и «Сохранить» не прыгает
+  document.querySelector('#editor .sheet-foot').addEventListener('mousedown', function (e) {
+    if (e.target.closest('button') && document.activeElement === el('tagInput')) e.preventDefault();
+  });
   // высота поля «Текст» подстраивается под написанное
   function fitText() {
     var t = el('text');
