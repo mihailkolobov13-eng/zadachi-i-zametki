@@ -117,6 +117,7 @@
   .task { background: var(--card); border-radius: 14px; padding: 13px 14px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; box-shadow: var(--shadow); }
   .task:hover { background: var(--card-hover); }
   .task input[type=checkbox] { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  .task .hit { display: flex; flex-shrink: 0; padding: 8px; margin: -8px; cursor: pointer; }
   .task .body { flex: 1; min-width: 0; }
   .task .title { font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
   .task .text { color: var(--muted); font-size: 14px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -238,7 +239,7 @@
   .card .title, .task .title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .card .text { -webkit-line-clamp: 8; }
   .sub span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .tag.more { background: var(--line); color: var(--muted); cursor: default; }
+  .tag.more { background: var(--line); color: var(--muted); cursor: pointer; }
   .tag.more:hover { text-decoration: none; }
 
   /* ====== Свой календарь для срока ====== */
@@ -375,7 +376,7 @@
   @media (max-width: 600px) {
     .tabs button { font-size: 15px; padding: 10px 6px; }
     h1 { font-size: 26px; }
-    .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }   /* minmax(0,…): длинный хэштег не раздувает колонку */
     .card { padding: 14px; border-radius: 14px; }
     .overlay { padding: 0; align-items: stretch; }
     .sheet { max-width: none; border-radius: 0; min-height: 100%; }
@@ -387,6 +388,7 @@
   /* На сенсорном экране (телефон, планшет) всё, что нажимают пальцем, не меньше ~36 px */
   @media (pointer: coarse) {
     .task input.main { width: 28px; height: 28px; }
+    .task .hit { padding: 12px; margin: -12px; }
     .task .star { padding: 8px 10px; margin: -8px -10px -8px 0; font-size: 22px; min-width: 40px; min-height: 40px; }
     .sub input { width: 22px; height: 22px; }
     .sub { padding: 5px 0; min-height: 34px; }
@@ -559,32 +561,50 @@
   var THEME_KEY = 'notes_tasks_theme'; // выбранная тема
   var TAB_KEY = 'notes_tasks_tab';     // открытая вкладка
   var canSave = true;
+  var foreign = [];      // записи, которые эта версия сайта не понимает: не показываем, но и не стираем
+  var broken = false;    // записи в памяти не прочитались: ничего не перезаписываем, чтобы их не потерять
 
   // Достаём записи из памяти браузера (localStorage)
   function load() {
-    try {
-      var saved = JSON.parse(localStorage.getItem(KEY));
-      if (!Array.isArray(saved)) return [];
-      return saved.filter(validRecord).map(upgrade);
-    } catch (e) {
-      return [];
-    }
+    foreign = [];
+    broken = false;
+    var raw = null, saved;
+    try { raw = localStorage.getItem(KEY); } catch (e) { return []; }
+    if (raw === null) return [];
+    try { saved = JSON.parse(raw); } catch (e) { saved = undefined; }
+    if (saved === null) return [];
+    if (!Array.isArray(saved)) { broken = true; return []; }
+    var list = [];
+    saved.forEach(function (x) {
+      if (validRecord(x)) list.push(upgrade(x)); else foreign.push(x);
+    });
+    return list;
   }
 
-  // Кладём записи в память браузера
-  function save() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(items));
-      canSave = true;
-    } catch (e) {
-      canSave = false;
-      // память переполнена — это не то же самое, что запрет на сохранение
-      var full = e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014);
-      el('warning').textContent = full
+  // Предупреждение над списком: память заполнена или сохранять нельзя
+  function showWarning(e) {
+    // память переполнена — это не то же самое, что запрет на сохранение
+    var full = e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014);
+    el('warning').textContent = broken
+      ? 'Сохранённые записи не удалось прочитать. Чтобы не стереть их, сайт пока ничего не сохраняет. Не очищайте данные сайта и напишите автору.'
+      : full
         ? 'Память браузера заполнена, последние изменения не сохранились. Скачайте копию (внизу страницы), очистите корзину и удалите ненужное.'
         : 'Браузер не даёт сохранять данные. Записи пропадут после закрытия страницы.';
+    el('warning').style.display = 'block';
+  }
+
+  // Кладём записи в память браузера. Возвращает true, если получилось
+  function save() {
+    if (broken) { canSave = false; showWarning(); return false; }
+    try {
+      localStorage.setItem(KEY, JSON.stringify(foreign.length ? items.concat(foreign) : items));
+      canSave = true;
+      el('warning').style.display = 'none';
+    } catch (e) {
+      canSave = false;
+      showWarning(e);
     }
-    el('warning').style.display = canSave ? 'none' : 'block';
+    return canSave;
   }
 
   // Мелкие настройки (тема, сортировка, вкладка); если не сохранились — не страшно
@@ -618,11 +638,16 @@
   var TAGS_KEY = 'notes_tasks_tags';   // хэштеги, которые человек вводил сам (запоминаются сразу)
   var myTags = loadMyTags();
 
+  // Словарь «хэштег → значение» без встроенных свойств: иначе хэштеги #constructor и #__proto__ ломались
+  function dict(o) {
+    var m = Object.create(null);
+    if (o && typeof o === 'object' && !Array.isArray(o)) Object.keys(o).forEach(function (k) { m[k] = o[k]; });
+    return m;
+  }
+  function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+
   function loadMyTags() {
-    try {
-      var t = JSON.parse(localStorage.getItem(TAGS_KEY));
-      return t && typeof t === 'object' && !Array.isArray(t) ? t : {};
-    } catch (e) { return {}; }
+    try { return dict(JSON.parse(localStorage.getItem(TAGS_KEY))); } catch (e) { return dict(); }
   }
 
   // Запоминаем хэштег сразу, даже если запись потом не сохранили
@@ -635,9 +660,11 @@
   var tagInputOpen = false;
 
   // Приводим хэштег к одному виду: без #, маленькими буквами, пробелы -> _
+  // Разрешены любые буквы и цифры (їжа, café), а ещё _ - + (c++)
   function cleanTag(s) {
     return String(s).trim().replace(/^#+/, '').toLowerCase()
-      .replace(/\s+/g, '_').replace(/[^0-9a-zа-яё_-]/gi, '').slice(0, 30);
+      .replace(/\s+/g, '_').replace(/[^\p{L}\p{M}\p{N}_+-]/gu, '').slice(0, 30)
+      .replace(/[\uD800-\uDBFF]$/, '');   // не оставляем половинку редкого символа на обрезе
   }
 
   // Запись из старой версии: категорию превращаем в хэштег
@@ -645,6 +672,13 @@
   function validRecord(x) {
     return !!x && typeof x === 'object' && Number.isSafeInteger(x.id) && x.id > 0 &&
       (x.type === 'note' || x.type === 'task' || x.type === undefined);
+  }
+
+  // Срок годится, если это существующая дата вида '2026-11-20'
+  function validDue(s) {
+    if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+    var d = new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
+    return iso(d) === s;
   }
 
   function upgrade(x) {
@@ -655,14 +689,21 @@
     if (x.pinned !== true) delete x.pinned;
     if (x.star !== true) delete x.star;
     if (['day', 'week', 'month'].indexOf(x.repeat) === -1) delete x.repeat;
-    if (typeof x.updated !== 'number') delete x.updated;
+    if (typeof x.updated !== 'number' || !isFinite(x.updated)) delete x.updated;
     if (!Array.isArray(x.tags)) {
       var t = x.category ? cleanTag(x.category) : '';
       x.tags = t ? [t] : [];
     }
     delete x.category;
+    // хэштеги из файла копии приводим к обычному виду, пустые и повторы убираем
+    x.tags = x.tags.map(function (t) { return typeof t === 'string' ? cleanTag(t) : ''; })
+      .filter(function (t, i, all) { return t && all.indexOf(t) === i; });
     if (typeof x.text !== 'string') x.text = '';
-    if (typeof x.title !== 'string') x.title = String(x.title || '');
+    // срок — только настоящая дата вида 2026-11-20, иначе срока нет (защита от испорченного или чужого файла)
+    if (!validDue(x.due)) x.due = '';
+    if (!x.due) { delete x.repeat; delete x.repeatDay; }   // повтору нужен срок
+    if (typeof x.created !== 'string') x.created = '';
+    x.done = x.done === true || x.done === 1;
     if (!Array.isArray(x.subtasks)) x.subtasks = [];
     x.subtasks = x.subtasks.filter(function (s) { return s && typeof s.text === 'string'; })
       .map(function (s) { var o = { text: s.text, done: !!s.done }; if (s.auto && o.done) o.auto = true; return o; });
@@ -682,14 +723,14 @@
   function loadColors() {
     try {
       var c = JSON.parse(localStorage.getItem(COLORS_KEY));
-      return c && typeof c === 'object' && !Array.isArray(c) ? c : null;
+      return c && typeof c === 'object' && !Array.isArray(c) ? dict(c) : null;
     } catch (e) { return null; }
   }
   function initColors() {
     if (!tagColors) {
       tagColors = loadColors();
       if (!tagColors) {               // первый запуск этой версии: берём цвета, которые были раньше
-        tagColors = {};
+        tagColors = dict();
         oldOrder().forEach(function (tag, i) { tagColors[tag] = i % 12; });
         saveSetting(COLORS_KEY, JSON.stringify(tagColors));
       }
@@ -697,11 +738,12 @@
   }
   function tagColor(t) {
     initColors();
-    if (!(t in tagColors)) {
-      tagColors[t] = Object.keys(tagColors).length % 12;
+    var c = has(tagColors, t) ? Number(tagColors[t]) : NaN;
+    if (!(Number.isInteger(c) && c >= 0 && c < 12)) {
+      c = tagColors[t] = Object.keys(tagColors).length % 12;
       saveSetting(COLORS_KEY, JSON.stringify(tagColors));
     }
-    return 'c' + tagColors[t];
+    return 'c' + c;
   }
   // Порядок, по которому цвета раздавались в прошлых версиях
   function oldOrder() {
@@ -717,7 +759,7 @@
 
   // Хэштеги, которые уже использовались или вводились: сначала недавние
   function usedTags() {
-    var last = {};
+    var last = dict();
     items.forEach(function (x) {
       x.tags.forEach(function (t) { if (!last[t] || x.id > last[t]) last[t] = x.id; });
     });
@@ -752,7 +794,7 @@
 
   // '2026-11-20' -> '20.11.2026'
   function showDate(s) {
-    var p = s.split('-');
+    var p = esc(s).split('-');   // esc — вторая защита: даже странный срок не станет кодом
     return p[2] + '.' + p[1] + '.' + p[0];
   }
 
@@ -809,19 +851,52 @@
     el('error').textContent = isTask ? 'Напишите, что нужно сделать.' : 'Введите заголовок.';
     el('confirm').style.display = 'none';
 
+    openSig = editorSig();
+    openSnap = item ? JSON.stringify(item) : null;
+    draftSaved = false;
+
     el('editor').classList.add('open');
     openedAt = Date.now();
     document.body.style.overflow = 'hidden';
-    el('title').focus();
+    pushSheet();
+    // курсор в заголовок — у новой записи и на компьютере; на телефоне при чтении записи клавиатура не выскакивает
+    if (!item || (window.matchMedia && window.matchMedia('(pointer: fine)').matches)) {
+      el('title').focus();
+      if (item) { el('title').setSelectionRange(0, 0); el('title').scrollLeft = 0; }   // длинный заголовок видно с начала
+    } else {
+      el('backBtn').focus({ preventScroll: true });
+    }
   }
 
-  function closeEditor() {
+  // Кнопка «Назад» телефона или браузера закрывает открытое окно, а не уходит с сайта
+  var sheetInHistory = false, skipPop = 0;
+  function pushSheet() {
+    if (sheetInHistory) return;
+    try { history.pushState({ sheet: 1 }, ''); sheetInHistory = true; } catch (e) {}
+  }
+  function popSheet() {
+    if (!sheetInHistory) return;
+    sheetInHistory = false;
+    skipPop++;
+    history.back();
+  }
+  window.addEventListener('popstate', function () {
+    if (skipPop) { skipPop--; return; }   // это мы сами убрали шаг после закрытия окна
+    sheetInHistory = false;
+    if (el('editor').classList.contains('open')) leaveEditor(true);
+    else if (el('trash').classList.contains('open')) closeTrash(true);
+  });
+
+  // fromHistory — окно закрыли кнопкой «Назад» браузера, шаг в истории уже убран
+  function closeEditor(fromHistory) {
     var back = editId;
     if (el('editor').contains(document.activeElement)) document.activeElement.blur();
     el('editor').classList.remove('open');
     document.body.style.overflow = '';
     editId = null;
+    draftSaved = false;
     tagInputOpen = false;
+    if (!fromHistory) popSheet();
     // фокус обратно на карточку, с которой открывали (удобно с клавиатуры)
     setTimeout(function () {
       var c = back && document.querySelector('#list [data-id="' + back + '"]');
@@ -884,10 +959,13 @@
     };
     var html = '';
 
-    if (!q) {
+    if (!q && el('tagInput').value.trim()) {
+      // ввели только знаки, которых в хэштеге быть не может
+      html = '<div class="hint">В хэштеге могут быть только буквы, цифры и знаки _ - +</div>';
+    } else if (!q) {
       var recent = usedTags().filter(free).slice(0, 10);
       var base = BASE_TAGS.filter(function (t) { return free(t) && recent.indexOf(t) === -1; }).slice(0, BASE_SHOWN);
-      var inUse = {};
+      var inUse = dict();
       items.forEach(function (x) { x.tags.forEach(function (t) { inUse[t] = 1; }); });
       // хэштег, которого нет ни в одной записи, можно убрать из подсказок крестиком
       if (recent.length) html += '<div class="group">Вы использовали</div><div class="opts">' + recent.map(function (t) {
@@ -945,65 +1023,123 @@
     renderTagEditor();
   }
 
-  // Кнопка «Сохранить»
-  function saveEditor() {
+  // Что сейчас написано в окне — в том виде, в каком это сохранится
+  function editorData() {
+    var isTask = editType === 'task';
+    var subs = isTask ? editSubs.filter(function (s) { return s.text.trim(); })
+      .map(function (s) { return { text: s.text.trim(), done: s.done }; }) : [];
+    var due = isTask ? el('due').value : '';
+    return {
+      title: el('title').value.trim(),
+      text: isTask ? '' : el('text').value.trim(),
+      subtasks: subs,
+      tags: editTags.slice(),
+      due: due,
+      rep: isTask && due ? editRepeat : '',
+      pin: editPin
+    };
+  }
+  // «Отпечаток» окна: по нему видно, меняли ли что-нибудь после открытия
+  function editorSig() { return JSON.stringify(editorData()); }
+  var openSig = '';      // отпечаток окна при открытии
+  var openSnap = null;   // запись при открытии окна (для «Отменить»), null — новая запись
+  var draftSaved = false;   // запись уже тихо сохранили, пока окно было открыто (ушли со страницы)
+
+  // Кладём написанное в запись. mode: 'manual' — кнопка «Сохранить», 'auto' — закрыли окно,
+  // 'draft' — ушли со страницы, окно остаётся открытым. Возвращает номер записи и новую дату повтора
+  function commitEditor(mode) {
+    var d = editorData();
+    var isTask = editType === 'task';
+    if (!d.title) d.title = 'Без названия';
+    var allDone = d.subtasks.length > 0 && d.subtasks.every(function (s) { return s.done; });
+    var item = editId ? findItem(editId) : null;   // запись могли удалить в другой вкладке — тогда сохраним как новую
+    var repeated = '';
+    if (item) {
+      var before = JSON.stringify([item.title, item.text, item.tags, item.due, item.subtasks.map(function (s) { return [s.text, s.done]; }), item.repeat || '', !!(isTask ? item.star : item.pinned)]);
+      var after = JSON.stringify([d.title, d.text, d.tags, d.due, d.subtasks.map(function (s) { return [s.text, s.done]; }), d.rep, d.pin]);
+      if (before !== after) item.updated = Date.now();   // запоминаем, когда меняли
+      item.title = d.title;
+      item.text = d.text;
+      item.tags = d.tags;
+      var dueChanged = item.due !== d.due;
+      item.due = d.due;
+      item.subtasks = d.subtasks;
+      setFlags(item, d.pin, d.rep, dueChanged);
+      if (mode !== 'draft') {
+        if (d.subtasks.length) item.done = allDone;   // все пункты отмечены — задача выполнена
+        if (item.done && item.repeat) repeated = nextRepeat(item, doneState(item), mode === 'auto');
+      }
+    } else {
+      item = {
+        id: newId(),
+        type: editType,
+        title: d.title,
+        text: d.text,
+        tags: d.tags,
+        subtasks: d.subtasks,
+        done: mode !== 'draft' && allDone,
+        created: new Date().toLocaleDateString('ru-RU'),
+        due: d.due
+      };
+      setFlags(item, d.pin, d.rep, true);
+      items.unshift(item);
+      if (item.done && item.repeat) repeated = nextRepeat(item, doneState(item), mode === 'auto');
+    }
+    editId = item.id;   // дальше правим уже эту запись, а не создаём ещё одну
+    save();
+    return { id: item.id, repeated: repeated };
+  }
+
+  // Кнопка «Сохранить» (auto = false) или закрытие окна (auto = true: Esc, «Назад», нажатие мимо окна)
+  function saveEditor(auto, fromHistory) {
     if (!el('editor').classList.contains('open')) return;   // окно уже закрыто (быстрый второй Enter) — второй раз не сохраняем
-    var title = el('title').value.trim();
-    if (!title) {
+    if (el('tagInput').value.trim()) addTag(el('tagInput').value);   // не забываем недописанный хэштег
+    var d = editorData();
+    if (auto) {
+      // ничего не меняли — просто закрываем
+      if (editorSig() === openSig && !draftSaved) { closeEditor(fromHistory); return; }
+      // в новой записи ничего не написано — тоже просто закрываем
+      if (!openSnap && !d.title && !d.text && !d.subtasks.length) {
+        if (draftSaved) items = items.filter(function (x) { return x.id !== editId; });   // убираем тихо сохранённую пустую
+        if (draftSaved) save();
+        closeEditor(fromHistory);
+        render();
+        return;
+      }
+    } else if (!d.title) {
       el('error').style.display = 'block';
       el('title').focus();
       return;
     }
-    if (el('tagInput').value.trim()) addTag(el('tagInput').value);   // не забываем недописанный хэштег
-    var isTask = editType === 'task';
-    var subs = isTask ? editSubs.filter(function (s) { return s.text.trim(); })
-      .map(function (s) { return { text: s.text.trim(), done: s.done }; }) : [];
-    var allDone = subs.length > 0 && subs.every(function (s) { return s.done; });
-    var data = {
-      title: title,
-      text: isTask ? '' : el('text').value.trim(),
-      subtasks: subs,
-      tags: editTags.slice(),
-      due: editType === 'task' ? el('due').value : ''
-    };
-    var rep = isTask && data.due ? editRepeat : '';
-
-    if (editId) {
-      var item = findItem(editId);
-      if (item) {
-        var before = JSON.stringify([item.title, item.text, item.tags, item.due, item.subtasks.map(function (s) { return [s.text, s.done]; }), item.repeat || '']);
-        var after = JSON.stringify([data.title, data.text, data.tags, data.due, data.subtasks.map(function (s) { return [s.text, s.done]; }), rep]);
-        if (before !== after) item.updated = Date.now();   // запоминаем, когда меняли
-        item.title = data.title;
-        item.text = data.text;
-        item.tags = data.tags;
-        var dueChanged = item.due !== data.due;
-        item.due = data.due;
-        item.subtasks = data.subtasks;
-        setFlags(item, editPin, rep, dueChanged);
-        if (subs.length) item.done = allDone;   // все пункты отмечены — задача выполнена
-        if (item.done && item.repeat) nextRepeat(item);
-      }
-    } else {
-      var fresh = {
-        id: newId(),
-        type: editType,
-        title: data.title,
-        text: data.text,
-        tags: data.tags,
-        subtasks: data.subtasks,
-        done: allDone,
-        created: new Date().toLocaleDateString('ru-RU'),
-        due: data.due
-      };
-      setFlags(fresh, editPin, rep, true);
-      items.unshift(fresh);
-    }
-    var savedId = editId || items[0].id;
-    save();
-    closeEditor();
+    var snap = openSnap;
+    var res = commitEditor(auto ? 'auto' : 'manual');
+    closeEditor(fromHistory);
     render();
-    tellIfHidden(savedId);
+    if (!auto) { tellIfHidden(res.id); return; }
+    // закрыли окно — сохранили сами и даём отменить
+    var x = findItem(res.id);
+    var word = x && x.type === 'task' ? 'Задача' : 'Заметка';
+    var msg = snap ? 'Изменения сохранены' : word + ' сохранена';
+    if (res.repeated) msg += '. Следующий раз: ' + showDate(res.repeated);
+    else if (x && x.type === tab && !matches(x)) msg += ', но скрыта поиском или фильтром';
+    showToast(msg, 'Отменить', function () {
+      var old = snap ? JSON.parse(snap) : null;
+      var cur = findItem(res.id);
+      if (old && old.id === res.id) { if (cur) items[items.indexOf(cur)] = old; }
+      else items = items.filter(function (y) { return y.id !== res.id; });   // новую запись убираем совсем
+      save();
+      render();
+    });
+  }
+  // Закрыть окно с сохранением
+  function leaveEditor(fromHistory) { saveEditor(true, fromHistory); }
+  // Ушли со страницы или свернули её с открытым окном: тихо сохраняем, чтобы текст не пропал
+  function saveDraft() {
+    if (!el('editor').classList.contains('open') || editorSig() === openSig) return;
+    var d = editorData();
+    if (!openSnap && !draftSaved && !d.title && !d.text && !d.subtasks.length) return;
+    commitEditor('draft');
+    draftSaved = true;
   }
 
   // Запись сохранили, но её не видно из-за поиска, хэштега или фильтра — говорим об этом и даём показать
@@ -1078,8 +1214,15 @@
     var p = due.split('-'), y = +p[0], m = +p[1] - 1, day = +p[2];
     if (rep === 'month' && wantDay) day = wantDay;
     var today = todayStr(), d, k = 0, s;
+    // давний срок: сразу перескакиваем почти к сегодняшнему дню, а не шагаем по одному разу
+    var now = new Date();
+    var behind = Math.round((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(y, m, +p[2])) / 86400000);
+    if (rep === 'day') k = Math.max(0, behind - 1);
+    else if (rep === 'week') k = Math.max(0, Math.floor(behind / 7) - 1);
+    else k = Math.max(0, (now.getFullYear() - y) * 12 + now.getMonth() - m - 1);
+    var steps = 0;
     do {
-      k++;
+      k++; steps++;
       if (rep === 'day') d = new Date(y, m, day + k);
       else if (rep === 'week') d = new Date(y, m, day + 7 * k);
       else {
@@ -1087,21 +1230,29 @@
         d = new Date(y, m + k, Math.min(day, last));
       }
       s = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    } while (s <= today && k < 5000);
+    } while (s <= today && steps < 5000);
     return s;
   }
-  // Повторяющуюся задачу не закрываем, а переносим на следующий раз
-  function nextRepeat(item) {
-    var was = { due: item.due, subs: item.subtasks.map(function (s) { return s.done; }) };
+  // Состояние задачи (срок, галочка, пункты) — чтобы «Отменить» вернуло всё как было
+  function doneState(item) {
+    return { due: item.due, done: item.done, subtasks: JSON.parse(JSON.stringify(item.subtasks)) };
+  }
+  // Повторяющуюся задачу не закрываем, а переносим на следующий раз.
+  // was — какой задача была до нажатия (её вернёт «Отменить»); quiet — без своей всплывающей строки
+  function nextRepeat(item, was, quiet) {
     item.due = nextDate(item.due, item.repeat, item.repeatDay);
     item.done = false;
     item.subtasks.forEach(function (s) { s.done = false; delete s.auto; });
-    showToast('Готово. Следующий раз: ' + showDate(item.due), 'Отменить', function () {
-      item.due = was.due;
-      item.subtasks.forEach(function (s, i) { s.done = !!was.subs[i]; });
+    if (!quiet) showToast('Готово. Следующий раз: ' + showDate(item.due), 'Отменить', function () {
+      var cur = findItem(item.id);   // запись могли перечитать (другая вкладка) — правим ту, что сейчас в списке
+      if (!cur) return;
+      cur.due = was.due;
+      cur.done = was.done;
+      cur.subtasks = was.subtasks;
       save();
       render();
     });
+    return item.due;
   }
 
   // ====== КОРЗИНА ======
@@ -1118,12 +1269,23 @@
     if (kept.length !== t.length) saveSetting(TRASH_KEY, JSON.stringify(kept));   // и из памяти браузера тоже
     return kept;
   }
-  function saveTrash() { saveSetting(TRASH_KEY, JSON.stringify(trash)); }
+  // Корзину сохраняем с проверкой: если память заполнена, запись нельзя удалять (иначе она пропадёт совсем)
+  function saveTrash() {
+    try { localStorage.setItem(TRASH_KEY, JSON.stringify(trash)); return true; }
+    catch (e) { showWarning(e); return false; }
+  }
+  var FULL_MSG = 'Не получилось сохранить: память браузера заполнена или недоступна. Ничего не потеряно.';
   function restoreFromTrash(id) {
     var r = null;
-    trash = trash.filter(function (x) { if (x.item.id === id) { r = x; return false; } return true; });
-    if (r && !findItem(id)) items.push(r.item);
-    saveTrash(); save(); render();
+    trash.forEach(function (x) { if (x.item.id === id) r = x; });
+    if (!r) return null;
+    // сначала кладём запись в список и сохраняем его, только потом убираем из корзины
+    if (!findItem(id)) {
+      items.push(r.item);
+      if (!save()) { items.pop(); showToast(FULL_MSG); return null; }
+    }
+    trash = trash.filter(function (x) { return x.item.id !== id; });
+    saveTrash(); render();
     if (el('trash').classList.contains('open')) renderTrash();
     return r;
   }
@@ -1146,11 +1308,13 @@
     el('trash').classList.add('open');
     openedAt = Date.now();
     document.body.style.overflow = 'hidden';
+    pushSheet();
     el('trashBack').focus();
   }
-  function closeTrash() {
+  function closeTrash(fromHistory) {
     el('trash').classList.remove('open');
     document.body.style.overflow = '';
+    if (!fromHistory) popSheet();
   }
 
   // Удаление: сначала спрашиваем, потом удаляем
@@ -1162,18 +1326,23 @@
     var pos = -1;
     items.forEach(function (x, i) { if (x.id === id) pos = i; });
     var gone = pos >= 0 ? items[pos] : null;
+    if (gone) {
+      // сначала в корзину; не сохранилась корзина — запись не удаляем, иначе она пропадёт совсем
+      trash.push({ item: gone, deleted: Date.now() });
+      if (!saveTrash()) { trash.pop(); el('confirm').style.display = 'none'; showToast(FULL_MSG); return; }
+    }
     items = items.filter(function (x) { return x.id !== id; });
-    if (gone) { trash.push({ item: gone, deleted: Date.now() }); saveTrash(); }   // сначала в корзину
     save();
     closeEditor();
     render();
     if (gone) {
       showToast((gone.type === 'task' ? 'Задача' : 'Заметка') + ' в корзине', 'Вернуть', function () {
+        if (!findItem(gone.id)) {
+          items.splice(Math.min(pos, items.length), 0, gone);
+          if (!save()) { items = items.filter(function (x) { return x !== gone; }); showToast(FULL_MSG); return; }
+        }
         trash = trash.filter(function (r) { return r.item.id !== gone.id; });
         saveTrash();
-        if (findItem(gone.id)) return;
-        items.splice(Math.min(pos, items.length), 0, gone);
-        save();
         render();
       });
     }
@@ -1233,25 +1402,34 @@
       data.trash.forEach(function (r) {
         if (!r || !validRecord(r.item) || findItem(r.item.id)) return;
         if (trash.some(function (t) { return t.item.id === r.item.id; })) return;
-        trash.push({ item: r.item, deleted: Number(r.deleted) || Date.now() });
+        var when = Number(r.deleted);
+        if (!isFinite(when) || when <= 0 || when > Date.now()) when = Date.now();
+        trash.push({ item: upgrade(r.item), deleted: when });
       });
+    }
+    // запись из копии вернулась в список — в корзине её больше не держим
+    trash = trash.filter(function (r) { return !findItem(r.item.id); });
+    if (save()) {
       saveTrash();
       trash = loadTrash();
     }
     if (data.tags && typeof data.tags === 'object') {
-      Object.keys(data.tags).forEach(function (t) { if (!myTags[t]) myTags[t] = data.tags[t]; });
+      Object.keys(data.tags).forEach(function (t) {
+        var c = cleanTag(t), when = Number(data.tags[t]);
+        if (c && isFinite(when) && !has(myTags, c)) myTags[c] = when;
+      });
       saveSetting(TAGS_KEY, JSON.stringify(myTags));
     }
     if (data.colors && typeof data.colors === 'object') {
       initColors();
       Object.keys(data.colors).forEach(function (t) {
-        var c = Number(data.colors[t]);
-        if (!(t in tagColors) && c >= 0 && c < 12) tagColors[t] = c;
+        var c = Number(data.colors[t]), tag = cleanTag(t);
+        if (tag && !has(tagColors, tag) && Number.isInteger(c) && c >= 0 && c < 12) tagColors[tag] = c;
       });
       saveSetting(COLORS_KEY, JSON.stringify(tagColors));
     }
-    save();
     render();
+    if (!canSave) { showToast('Записи загружены, но не сохранились: память браузера заполнена'); return; }
     showToast('Загружено: добавлено ' + added + ' ' + recWord(added) + (changed ? ', обновлено ' + changed : '') + (same ? ', ' + same + ' уже были' : ''));
   }
 
@@ -1259,8 +1437,10 @@
   function toggleDone(id) {
     var item = findItem(id);
     if (!item) return;
+    var was = doneState(item);
     item.done = !item.done;
-    if (item.done && item.repeat && item.due) { nextRepeat(item); save(); render(); return; }
+    item.updated = Date.now();   // чтобы галочка переносилась при загрузке копии
+    if (item.done && item.repeat && item.due) { nextRepeat(item, was); save(); render(); return; }
     var marked = item.subtasks.some(function (s) { return s.auto; });
     item.subtasks.forEach(function (s) {
       if (item.done) {
@@ -1278,10 +1458,12 @@
   function toggleSub(id, i) {
     var item = findItem(id);
     if (!item || !item.subtasks[i]) return;
+    var was = doneState(item);
     item.subtasks[i].done = !item.subtasks[i].done;
     delete item.subtasks[i].auto;
     item.done = item.subtasks.every(function (s) { return s.done; });
-    if (item.done && item.repeat && item.due) nextRepeat(item);
+    item.updated = Date.now();
+    if (item.done && item.repeat && item.due) nextRepeat(item, was);
     save();
     render();
   }
@@ -1291,6 +1473,7 @@
     var item = findItem(id);
     if (!item) return;
     if (item.star) delete item.star; else item.star = true;
+    item.updated = Date.now();
     save();
     render();
   }
@@ -1329,7 +1512,7 @@
     var cat = el('catFilter').value;
     if (cat && x.tags.indexOf(cat) === -1) return false;
     var q = norm(el('search').value.trim());
-    var where = x.title + ' ' + x.text + ' ' + x.subtasks.map(function (s) { return s.text; }).join(' ') + ' #' + x.tags.join(' #');
+    var where = x.title + ' ' + x.text + ' ' + x.subtasks.map(function (s) { return s.text; }).join(' ') + (x.tags.length ? ' #' + x.tags.join(' #') : '');
     if (q && norm(where).indexOf(q) === -1) return false;
     return true;
   }
@@ -1360,13 +1543,15 @@
 
   // Хэштеги на карточке; нажатие на хэштег показывает все записи с ним
   var TAGS_ON_CARD = 3;   // сколько хэштегов видно на карточке, остальные — «…»
+  var allTagsShown = dict();   // у каких записей нажали «…» и показали все хэштеги
   function tagsHtml(x) {
-    var html = x.tags.slice(0, TAGS_ON_CARD).map(function (t) {
+    var n = allTagsShown[x.id] ? x.tags.length : TAGS_ON_CARD;
+    var html = x.tags.slice(0, n).map(function (t) {
       return '<span class="tag ' + tagColor(t) + '" data-tag="' + esc(t) + '" title="Показать все с #' + esc(t) + '">#' + esc(t) + '</span>';
     }).join('');
-    if (x.tags.length > TAGS_ON_CARD) {
-      var rest = x.tags.slice(TAGS_ON_CARD).map(function (t) { return '#' + t; }).join(' ');
-      html += '<span class="tag more" title="' + esc(rest) + '">…</span>';
+    if (x.tags.length > n) {
+      var rest = x.tags.slice(n).map(function (t) { return '#' + t; }).join(' ');
+      html += '<span class="tag more" role="button" tabindex="0" title="' + esc(rest) + '" aria-label="Показать все хэштеги">…</span>';
     }
     return html;
   }
@@ -1402,7 +1587,8 @@
   function taskHtml(x) {
     var late = isLate(x);
     var html = '<div class="task' + stripe(x) + (x.done ? ' done' : '') + (late ? ' overdue' : '') + '" tabindex="0" role="button" data-id="' + x.id + '">';
-    html += '<input type="checkbox" class="main" aria-label="Выполнено" title="Отметить выполненной"' + (x.done ? ' checked' : '') + '>';
+    // галочка в рамке-подписи: по ней легче попасть пальцем, промах не открывает окно
+    html += '<label class="hit" title="Отметить выполненной"><input type="checkbox" class="main" aria-label="Выполнено"' + (x.done ? ' checked' : '') + '></label>';
     html += '<div class="body"><div class="title">' + esc(x.title) + '</div>';
     if (x.text) html += '<div class="text">' + esc(x.text) + '</div>';
     if (x.subtasks.length) {
@@ -1583,11 +1769,18 @@
   el('list').addEventListener('click', function (e) {
     if (e.target.closest('#moreBtn')) { showLimit += PAGE; render(); return; }
     if (e.target.closest('a')) return;   // ссылка открывается сама, запись не открываем
+    if (e.target.closest('.hit') && !e.target.matches('input')) return;   // рамка вокруг галочки сама нажмёт галочку
     var st = e.target.closest('.star');
     if (st) { toggleStar(Number(st.closest('[data-id]').getAttribute('data-id'))); return; }
     if (e.target.closest('#doneToggle')) {
       showDone = !showDone;
       saveSetting('notes_tasks_showdone', showDone ? '1' : '0');
+      render();
+      return;
+    }
+    var moreEl = e.target.closest('.tag.more');
+    if (moreEl) {   // «…» — показать все хэштеги этой записи (на телефоне подсказки при наведении нет)
+      allTagsShown[moreEl.closest('[data-id]').getAttribute('data-id')] = true;
       render();
       return;
     }
@@ -1609,9 +1802,10 @@
     openEditor(id);
   });
   el('list').addEventListener('keydown', function (e) {
-    if (e.key !== 'Enter' || e.target.matches('input, button, a')) return;   // у кнопок и ссылок своё действие
+    if ((e.key !== 'Enter' && e.key !== ' ') || e.target.matches('input, button, a')) return;   // у кнопок и ссылок своё действие
+    if (e.target.matches('.tag.more')) { e.preventDefault(); e.target.click(); return; }
     var box = e.target.closest('[data-id]');
-    if (box) openEditor(Number(box.getAttribute('data-id')));
+    if (box) { e.preventDefault(); openEditor(Number(box.getAttribute('data-id'))); }
   });
 
   el('exportBtn').onclick = exportData;
@@ -1632,7 +1826,7 @@
     };
   });
   el('trashBtn').onclick = openTrash;
-  el('trashBack').onclick = closeTrash;
+  el('trashBack').onclick = function () { closeTrash(); };
   el('trash').addEventListener('click', function (e) { if (e.target === el('trash') && downOn === el('trash') && !justOpened()) closeTrash(); });
   el('trashList').addEventListener('click', function (e) {
     var row = e.target.closest('[data-tid]');
@@ -1655,8 +1849,8 @@
   el('trashClear').onclick = function () { el('trashConfirm').style.display = 'flex'; };
   el('trashNo').onclick = function () { el('trashConfirm').style.display = 'none'; };
   el('trashYes').onclick = function () { trash = []; saveTrash(); renderTrash(); render(); };
-  el('saveBtn').onclick = saveEditor;
-  el('backBtn').onclick = closeEditor;
+  el('saveBtn').onclick = function () { saveEditor(false); };
+  el('backBtn').onclick = function () { leaveEditor(); };   // «Назад» сохраняет написанное
   el('deleteBtn').onclick = askDelete;
   el('yesDel').onclick = removeItem;
   el('noDel').onclick = function () { el('confirm').style.display = 'none'; };
@@ -1668,7 +1862,7 @@
     if (editType === 'task') {
       if (editSubs.length) focusSub(0); else addSub(-1);
     } else {
-      saveEditor();
+      saveEditor(false);
     }
   };
 
@@ -1786,7 +1980,7 @@
   // (иначе кнопка, «уехавшая» из-под пальца, закрывала окно без сохранения)
   var downOn = null;
   document.addEventListener('mousedown', function (e) { downOn = e.target; }, true);
-  el('editor').addEventListener('click', function (e) { if (e.target === el('editor') && downOn === el('editor') && !justOpened()) closeEditor(); });
+  el('editor').addEventListener('click', function (e) { if (e.target === el('editor') && downOn === el('editor') && !justOpened()) leaveEditor(); });
   // нажатие на кнопки внизу окна не уводит курсор из поля хэштега: подсказки не сворачиваются и «Сохранить» не прыгает
   document.querySelector('#editor .sheet-foot').addEventListener('mousedown', function (e) {
     if (e.target.closest('button') && document.activeElement === el('tagInput')) e.preventDefault();
@@ -1805,7 +1999,9 @@
   el('tagInput').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      if (el('tagInput').value.trim()) addTag(el('tagInput').value); else closeTagInput();
+      if (cleanTag(el('tagInput').value)) addTag(el('tagInput').value);
+      else if (el('tagInput').value.trim()) renderSuggest();   // одни недопустимые знаки: оставляем и показываем подсказку
+      else closeTagInput();
     } else if (e.key === 'Backspace' && !el('tagInput').value && editTags.length) {
       removeTag(editTags[editTags.length - 1]);
     } else if (e.key === 'Escape') {
@@ -1853,7 +2049,7 @@
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !el('cal').hidden) { closeCal(); return; }
-    if (e.key === 'Escape' && el('editor').classList.contains('open')) closeEditor();
+    if (e.key === 'Escape' && el('editor').classList.contains('open')) leaveEditor();   // Esc сохраняет написанное
     else if (e.key === 'Escape' && el('trash').classList.contains('open')) closeTrash();
   });
 
@@ -1896,13 +2092,19 @@
     if (e.key === KEY) {
       var was = editId && findItem(editId) ? JSON.stringify(findItem(editId)) : null;
       items = load();
-      if (editId && !findItem(editId)) closeEditor();
-      else if (was && JSON.stringify(findItem(editId)) !== was) {
+      // запись удалили в другой вкладке: окно не закрываем, чтобы не пропало написанное
+      if (was && !findItem(editId)) {
+        showToast('Эту запись удалили в другой вкладке. Если что-то изменить, она сохранится заново как новая');
+      } else if (was && JSON.stringify(findItem(editId)) !== was) {
         showToast('Эту запись только что изменили в другой вкладке. Если сохранить, останется ваш вариант');
       }
       render();
     }
   });
+
+  // Закрыли вкладку, ушли на другой сайт или свернули браузер с открытым окном — тихо сохраняем написанное
+  window.addEventListener('pagehide', saveDraft);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) saveDraft(); });
 
   // Наступил новый день, а страница открыта: обновляем «Срок сегодня», «завтра», «Сегодня» и просрочки
   var shownDay = todayStr();
@@ -1917,6 +2119,7 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) checkDay(); });
   window.addEventListener('focus', checkDay);
 
+  if (broken) showWarning();   // записи в памяти не прочитались — предупреждаем сразу
   render();
 </script>
 </body>
