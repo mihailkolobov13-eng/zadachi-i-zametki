@@ -92,7 +92,18 @@
 
   /* ---------- Панель: поиск, категории, сортировка ---------- */
   .tools { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-  #search { flex: 2; min-width: 200px; }
+  .searchbox { position: relative; flex: 2; min-width: 200px; display: flex; }
+  .searchbox #search { flex: 1; width: 100%; padding-right: 44px; }
+  /* крестик «очистить поиск» внутри поля */
+  #searchClear { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--muted); font-size: 22px; line-height: 1; padding: 6px 12px; border-radius: 10px; }
+  #searchClear:hover { color: var(--text); background: var(--line); }
+  #searchClear[hidden] { display: none; }
+  /* строка «Показаны только #покупки ✕»: видно, что включён фильтр, и его легко снять */
+  #filterBar { display: flex; align-items: center; gap: 8px; width: 100%; margin: -4px 0 12px; background: var(--tag-bg); color: var(--tag-text); border: 1px solid transparent; border-radius: 12px; padding: 9px 14px; font-size: 15px; text-align: left; }
+  #filterBar .t { flex: 1; min-width: 0; overflow-wrap: break-word; }
+  #filterBar[hidden] { display: none; }
+  #filterBar:hover { border-color: var(--accent); }
+  #filterBar .x { margin-left: auto; padding-left: 8px; font-size: 18px; line-height: 1; }
   .tools select { flex: 1; min-width: 150px; }
   .addrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 14px; }
   #addBtn { background: var(--accent); color: var(--on-accent); font-weight: 600; padding: 11px 20px; }
@@ -124,7 +135,7 @@
   .task.done .title { text-decoration: line-through; color: var(--muted); }
   .task.overdue { box-shadow: inset 4px 0 0 var(--danger); }
 
-  .meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 5px; }
+  .meta { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 5px; }
   .tag { background: var(--tag-bg); color: var(--tag-text); border-radius: 10px; padding: 1px 9px; cursor: pointer; }
   .tag:hover { text-decoration: underline; }
   .due { border-radius: 10px; padding: 1px 9px; border: 1px solid var(--line); color: var(--text); }
@@ -255,7 +266,7 @@
   .cal-head button { background: transparent; color: var(--text); padding: 4px 11px; font-size: 18px; line-height: 1; border-radius: 10px; }
   .cal-head button:hover { background: var(--line); }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
-  .cal-grid .wd { font-size: 12px; color: var(--muted); padding: 4px 0; }
+  .cal-grid .wd { font-size: 13px; color: var(--muted); padding: 4px 0; }
   .cal-grid .wd.we { color: #c9365f; }
   [data-theme=dark] .cal-grid .wd.we, [data-theme=dark] .cal-grid button.we { color: #ff7a9c; }
   .cal-grid button, .cal-head button { border: none; }
@@ -294,7 +305,7 @@
   .card.c11,.task.c11{box-shadow:inset 3px 0 0 #30d0e8} [data-theme=dark] .card.c11,[data-theme=dark] .task.c11{box-shadow:inset 3px 0 0 #30d0e8,0 0 18px #30d0e81f}
   .card.notag, .task.notag { box-shadow: inset 3px 0 0 #94a3b8; }
   [data-theme=dark] .card.notag, [data-theme=dark] .task.notag { box-shadow: inset 3px 0 0 #64748b, 0 0 18px rgba(100,116,139,.12); }
-  .task .left { margin-left: auto; align-self: flex-start; padding-top: 3px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .task .left { margin-left: auto; align-self: flex-start; padding-top: 3px; font-size: 14px; color: var(--muted); white-space: nowrap; }
   .task .left.late { color: var(--danger); }
   .due.tomorrow { background: #ece4ff; border-color: #c4b0ff; color: #5a2ab4; }
   [data-theme="dark"] .due.tomorrow { background: #2c1f4d; border-color: #5b45a0; color: #c8b2ff; }
@@ -310,7 +321,7 @@
   @media print {
     .toprow { background: none !important; color: #000; padding: 0 0 10px; }
     .toprow h1 { color: #000; }
-    #themeBtn, .tabs, .tools, #taskFilters, .addrow, .backup, .star, .left, #toast, .overlay, #moreBtn, #doneToggle { display: none !important; }
+    #themeBtn, .tabs, .tools, #taskFilters, #filterBar, .addrow, .backup, .star, .left, #toast, .overlay, #moreBtn, #doneToggle { display: none !important; }
     body { background: #fff; color: #000; }
     .card, .task { box-shadow: none !important; border: 1px solid #ccc; break-inside: avoid; }
     .card a, .sub a { color: #000; }
@@ -410,6 +421,16 @@
     .meta .tag { padding: 6px 11px; }
     #toast button { min-height: 36px; }
   }
+  /* Кнопки для пальца — не меньше 44 px (только на сенсорных экранах) */
+  @media (pointer: coarse) {
+    .backup button, .quick button, #dueBtn, #tagSuggest button, #addTagBtn, #addSubBtn, #pinBtn, #backBtn, #trashBack,
+    #trashList .row button, #doneToggle, #moreBtn, .chips button, #themeBtn, #toast button, .tabs button, #addBtn,
+    #saveBtn, #deleteBtn, #yesDel, #noDel, #trashClear, #trashYes, #trashNo, #filterBar { min-height: 44px; }
+    .task .star, .subrow .rm, .cal-head button { min-width: 44px; min-height: 44px; }
+    .chip button { min-width: 44px; min-height: 44px; }
+    .cal-grid button { height: 44px; }
+    #searchClear { min-width: 44px; min-height: 44px; }
+  }
   /* градиент тянется и под прозрачную рамку — без цветной полоски по краям кнопок (замечание брата) */
   button { background-origin: border-box !important; }
   /* подсветка записи, которую только что показали */
@@ -434,7 +455,10 @@
 
   <!-- Поиск, категории, сортировка -->
   <div class="tools">
-    <input type="text" id="search" placeholder="Поиск" aria-label="Поиск">
+    <div class="searchbox">
+      <input type="text" id="search" placeholder="Поиск" aria-label="Поиск">
+      <button type="button" id="searchClear" aria-label="Очистить поиск" title="Очистить поиск" hidden>×</button>
+    </div>
     <select id="catFilter" aria-label="Хэштег"><option value="">Все хэштеги</option></select>
     <select id="sort" aria-label="Сортировка">
       <option value="new">Сначала новые</option>
@@ -458,6 +482,9 @@
     <div id="shown"></div>
     <button type="button" id="addBtn">Добавить заметку</button>
   </div>
+
+  <!-- Включён хэштег или поиск — говорим об этом; нажатие снимает фильтр -->
+  <button type="button" id="filterBar" aria-label="Снять фильтр и показать все записи" hidden></button>
 
   <div id="list"></div>
 
@@ -883,6 +910,8 @@
   window.addEventListener('popstate', function () {
     if (skipPop) { skipPop--; return; }   // это мы сами убрали шаг после закрытия окна
     sheetInHistory = false;
+    // открыт календарь — «Назад» закрывает только его, окно остаётся
+    if (el('editor').classList.contains('open') && !el('cal').hidden) { closeCal(); pushSheet(); return; }
     if (el('editor').classList.contains('open')) leaveEditor(true);
     else if (el('trash').classList.contains('open')) closeTrash(true);
   });
@@ -1356,7 +1385,7 @@
     t.classList.add('show');
     if (action) t.querySelector('button').onclick = function () { hideToast(); onAction(); };
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hideToast, action ? 7000 : 4000);
+    toastTimer = setTimeout(hideToast, action ? 12000 : 4000);   // с кнопкой «Отменить» — 12 с, чтобы успеть прочитать
   }
   function hideToast() { el('toast').classList.remove('show'); }
 
@@ -1440,6 +1469,7 @@
     var was = doneState(item);
     item.done = !item.done;
     item.updated = Date.now();   // чтобы галочка переносилась при загрузке копии
+    if (item.done) justDone[id] = Date.now();
     if (item.done && item.repeat && item.due) { nextRepeat(item, was); save(); render(); return; }
     var marked = item.subtasks.some(function (s) { return s.auto; });
     item.subtasks.forEach(function (s) {
@@ -1452,7 +1482,24 @@
     });
     save();
     render();
+    if (item.done) showToast('Задача выполнена', 'Отменить', undoDone(id, was));
   }
+  // «Отменить» после галочки: задача снова такая, какой была до нажатия
+  function undoDone(id, was) {
+    return function () {
+      var cur = findItem(id);
+      if (!cur) return;
+      cur.done = was.done;
+      cur.subtasks = was.subtasks;
+      cur.updated = Date.now();
+      save();
+      render();
+    };
+  }
+  // Когда задачу только что отметили (номер → время): повторное нажатие по ней в течение секунды не считаем,
+  // иначе медленный двойной щелчок по повторяющейся задаче перескакивал через день
+  var justDone = dict();
+  function tooSoon(id) { return Date.now() - (justDone[id] || 0) < 1000; }
 
   // Галочка у пункта прямо в списке; все пункты отмечены — задача выполнена
   function toggleSub(id, i) {
@@ -1463,9 +1510,11 @@
     delete item.subtasks[i].auto;
     item.done = item.subtasks.every(function (s) { return s.done; });
     item.updated = Date.now();
+    if (item.done) justDone[id] = Date.now();
     if (item.done && item.repeat && item.due) nextRepeat(item, was);
     save();
     render();
+    if (item.done && !item.repeat) showToast('Задача выполнена', 'Отменить', undoDone(id, was));
   }
 
   // Звёздочка «Важная» прямо в списке задач
@@ -1476,6 +1525,7 @@
     item.updated = Date.now();
     save();
     render();
+    showToast(item.star ? '★ Важная: задача всегда наверху списка' : 'Задача больше не важная');
   }
 
   // ====== 4. ОТБОР И СОРТИРОВКА ======
@@ -1640,9 +1690,20 @@
   }
   function resetLimit() { showLimit = PAGE; }
 
+  // Строка «Показаны только #покупки ✕» и крестик в поиске
+  function updateFilterBar() {
+    var tag = tabState[tab].tag, q = el('search').value.trim(), parts = [];
+    if (tag) parts.push('<b>#' + esc(tag) + '</b>');
+    if (q) parts.push('найденные по «' + esc(q) + '»');
+    el('filterBar').hidden = !parts.length;
+    if (parts.length) el('filterBar').innerHTML = '<span class="t">Показаны только ' + parts.join(', ') + '</span><span class="x" aria-hidden="true">✕</span>';
+    el('searchClear').hidden = !el('search').value;
+  }
+
   function render() {
     var isTask = tab === 'task';
     updateCategories();
+    updateFilterBar();
 
     // заголовок, вкладки, кнопка
     el('pageTitle').textContent = isTask ? 'Задачи' : 'Заметки';
@@ -1752,6 +1813,7 @@
   var searchTimer = null;
   el('search').oninput = function () {
     tabState[tab].search = el('search').value;
+    el('searchClear').hidden = !el('search').value;
     resetLimit();
     clearTimeout(searchTimer);
     if (items.length > 300) searchTimer = setTimeout(render, 150);   // при большом списке ждём, пока допишут
@@ -1764,6 +1826,13 @@
     render();
   };
   el('addBtn').onclick = function () { openEditor(null); };
+  el('searchClear').onclick = function () { el('search').value = ''; el('search').oninput(); el('search').focus(); };
+  // нажатие на строку фильтра снимает хэштег и поиск
+  el('filterBar').onclick = function () {
+    el('search').value = ''; tabState[tab].search = ''; tabState[tab].tag = '';
+    resetLimit();
+    render();
+  };
 
   // Нажатие на заметку или задачу открывает её; галочка — отмечает выполнение
   el('list').addEventListener('click', function (e) {
@@ -1795,10 +1864,20 @@
     var id = Number(box.getAttribute('data-id'));
     // пункт задачи: галочку обрабатываем, саму задачу не открываем
     if (e.target.closest('.sub')) {
-      if (e.target.matches('input[data-sub]')) toggleSub(id, Number(e.target.getAttribute('data-sub')));
+      if (e.target.matches('input[data-sub]')) {
+        if (tooSoon(id)) { render(); return; }   // задачу только что отметили — второе нажатие не считаем
+        toggleSub(id, Number(e.target.getAttribute('data-sub')));
+      }
       return;
     }
-    if (e.target.matches('input.main')) { toggleDone(id); return; }
+    if (e.target.matches('input.main')) {
+      if (tooSoon(id)) { render(); return; }
+      toggleDone(id);
+      return;
+    }
+    // выделили текст на карточке (например, номер телефона) — окно не открываем, чтобы можно было скопировать
+    var sel = window.getSelection && window.getSelection();
+    if (sel && !sel.isCollapsed && box.contains(sel.anchorNode)) return;
     openEditor(id);
   });
   el('list').addEventListener('keydown', function (e) {
@@ -1838,10 +1917,11 @@
     } else if (e.target.closest('.kill')) {
       var k = e.target.closest('.kill');
       if (!k.classList.contains('sure')) {   // первое нажатие — переспрашиваем
-        k.classList.add('sure'); k.textContent = 'Точно удалить?';
+        k.classList.add('sure'); k.textContent = 'Точно удалить?'; k.setAttribute('data-at', Date.now());
         setTimeout(function () { if (document.body.contains(k)) { k.classList.remove('sure'); k.textContent = 'Удалить навсегда'; } }, 4000);
         return;
       }
+      if (Date.now() - Number(k.getAttribute('data-at')) < 600) return;   // второе нажатие двойного щелчка — не подтверждение
       trash = trash.filter(function (x) { return x.item.id !== id; });
       saveTrash(); renderTrash(); render();
     }
@@ -1855,14 +1935,14 @@
   el('yesDel').onclick = removeItem;
   el('noDel').onclick = function () { el('confirm').style.display = 'none'; };
   el('title').oninput = function () { el('error').style.display = 'none'; };
-  // Enter в заголовке: у заметки — сохранить, у задачи — перейти к пунктам
+  // Enter в заголовке: у заметки — перейти к тексту, у задачи — к пунктам
   el('title').onkeydown = function (e) {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     if (editType === 'task') {
       if (editSubs.length) focusSub(0); else addSub(-1);
     } else {
-      saveEditor(false);
+      el('text').focus();   // на телефоне «↵» значит «дальше»: переходим к тексту, а не сохраняем
     }
   };
 
@@ -2118,6 +2198,32 @@
   setInterval(checkDay, 60000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) checkDay(); });
   window.addEventListener('focus', checkDay);
+
+  // ====== ДВОЙНОЕ НАЖАТИЕ ======
+  // Многие по привычке нажимают дважды. После первого нажатия на том же месте уже другая кнопка
+  // (открылось окно, задача ушла в «Выполненные»), и второе нажатие делало лишнее.
+  // Поэтому второе нажатие в то же место быстрее чем через полсекунды, если там уже другая кнопка, не засчитываем.
+  var lastTap = { t: 0, x: 0, y: 0, el: null };
+  function isRepeatTap(e) {
+    var prev = lastTap;
+    var lab = prev.el && prev.el.closest && prev.el.closest('label');
+    // та же кнопка или подпись, которая сама нажимает свою галочку, — это не повтор
+    var same = prev.el && (prev.el === e.target || prev.el.contains(e.target) || (lab && lab.contains(e.target)));
+    var near = Math.abs(e.clientX - prev.x) < 30 && Math.abs(e.clientY - prev.y) < 30;
+    return Date.now() - prev.t < 500 && near && !same && !e.target.closest('[data-nav]');   // стрелки календаря можно жать быстро
+  }
+  document.addEventListener('click', function (e) {
+    if (!e.isTrusted || e.detail === 0) return;   // нажатия с клавиатуры не трогаем
+    if (isRepeatTap(e)) { e.preventDefault(); e.stopPropagation(); return; }
+    lastTap = { t: Date.now(), x: e.clientX, y: e.clientY, el: e.target };
+  }, true);
+  // и само касание второго нажатия не уводит курсор из поля (иначе на телефоне прячется клавиатура)
+  document.addEventListener('mousedown', function (e) {
+    if (e.isTrusted && isRepeatTap(e)) e.preventDefault();
+  }, true);
+
+  // Страницу обновили с открытым окном: в истории остался его шаг — убираем, чтобы «Назад» сразу уходил с сайта
+  if (history.state && history.state.sheet) { skipPop++; history.back(); }
 
   if (broken) showWarning();   // записи в памяти не прочитались — предупреждаем сразу
   render();
