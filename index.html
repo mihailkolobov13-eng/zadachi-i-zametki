@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Задачи и заметки</title>
+<!-- значок вкладки прямо в файле: синий квадрат с галочкой, без отдельных файлов и запросов -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232f62e8'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url%28%23g%29'/%3E%3Cpath d='M17 33l10 10 20-22' fill='none' stroke='%23fff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script>
   // Тему ставим сразу, до отрисовки страницы, чтобы не мигал белый экран
   (function () {
@@ -164,7 +166,7 @@
   ::-webkit-scrollbar-thumb:hover { background: #7c3aed; background-clip: padding-box; }
   .sheet label, .sheet .label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
 
-  /* Хэштеги в окне */
+  /* Хештеги в окне */
   .tagchips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
   #selTags { display: contents; }
   .chip { display: inline-flex; align-items: center; background: var(--tag-bg); color: var(--tag-text); border-radius: 16px; padding: 4px 2px 4px 12px; font-size: 15px; }
@@ -220,7 +222,7 @@
   #yesDel { background: #c62828; color: #fff; }
   #noDel { background: transparent; color: var(--text); border-color: var(--field-line); }
 
-  /* ====== Оформление: перелив синий → фиолетовый, цвета хэштегов (вариант J2) ====== */
+  /* ====== Оформление: перелив синий → фиолетовый, цвета хештегов (вариант J2) ====== */
 
 :root{--bg:#f3f4fb;--card:#fff;--card-hover:#fafaff;--text:#171a2c;--muted:#5d6280;--line:#e2e4f2;--field:#fff;--field-line:#cfd2e6;
  --accent:#5b4ce6;--accent-hover:#5b4ce6;--on-accent:#fff;--tabc:#5b4ce6;--barc:#22c55e;--shadow:0 6px 20px rgba(40,40,120,.08)}
@@ -278,7 +280,7 @@
   .cal-grid button.sel, .cal-grid button.sel:hover { background: linear-gradient(120deg,#2f62e8,#7c3aed); color: #fff; opacity: 1; font-weight: 600; }
   /* ====== Выбранная кнопка срока ====== */
   .quick button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  /* ====== 12 цветов хэштегов: оттенки разнесены по кругу, соседние по порядку сильно отличаются ====== */
+  /* ====== 12 цветов хештегов: оттенки разнесены по кругу, соседние по порядку сильно отличаются ====== */
   .tag.c0,.chip.c0{background:#dde4fd;color:#0e2581} [data-theme=dark] .tag.c0,[data-theme=dark] .chip.c0{background:#182453;color:#8da3fc}
   .card.c0,.task.c0{box-shadow:inset 3px 0 0 #3055e8} [data-theme=dark] .card.c0,[data-theme=dark] .task.c0{box-shadow:inset 3px 0 0 #3055e8,0 0 18px #3055e81f}
   .tag.c1,.chip.c1{background:#fdecdd;color:#81440e} [data-theme=dark] .tag.c1,[data-theme=dark] .chip.c1{background:#533418;color:#fcc18d}
@@ -326,7 +328,7 @@
     .card, .task { box-shadow: none !important; border: 1px solid #ccc; break-inside: avoid; }
     .card a, .sub a { color: #000; }
   }
-  /* длинный хэштег не вылезает за карточку, обрезается с «…» */
+  /* длинный хештег не вылезает за карточку, обрезается с «…» */
   .meta .tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
   .chip { max-width: 100%; overflow-wrap: anywhere; }
   #moreBtn { grid-column: 1 / -1; align-self: center; justify-self: center; background: transparent; color: var(--text); border: 1px solid var(--field-line); border-radius: 16px; padding: 8px 18px; margin: 4px auto; }
@@ -387,7 +389,7 @@
   @media (max-width: 600px) {
     .tabs button { font-size: 15px; padding: 10px 6px; }
     h1 { font-size: 26px; }
-    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }   /* minmax(0,…): длинный хэштег не раздувает колонку */
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }   /* minmax(0,…): длинный хештег не раздувает колонку */
     .card { padding: 14px; border-radius: 14px; }
     .overlay { padding: 0; align-items: stretch; }
     .sheet { max-width: none; border-radius: 0; min-height: 100%; }
@@ -459,7 +461,7 @@
       <input type="text" id="search" placeholder="Поиск" aria-label="Поиск">
       <button type="button" id="searchClear" aria-label="Очистить поиск" title="Очистить поиск" hidden>×</button>
     </div>
-    <select id="catFilter" aria-label="Хэштег"><option value="">Все хэштеги</option></select>
+    <select id="catFilter" aria-label="Хештег"><option value="">Все хештеги</option></select>
     <select id="sort" aria-label="Сортировка">
       <option value="new">Сначала новые</option>
       <option value="upd">Недавно изменённые</option>
@@ -483,7 +485,7 @@
     <button type="button" id="addBtn">Добавить заметку</button>
   </div>
 
-  <!-- Включён хэштег или поиск — говорим об этом; нажатие снимает фильтр -->
+  <!-- Включён хештег или поиск — говорим об этом; нажатие снимает фильтр -->
   <button type="button" id="filterBar" aria-label="Снять фильтр и показать все записи" hidden></button>
 
   <div id="list"></div>
@@ -554,11 +556,11 @@
         <button type="button" data-rep="month">Каждый месяц</button>
       </div>
     </div>
-    <div class="label">Хэштеги</div>
+    <div class="label">Хештеги</div>
     <div class="tagchips">
       <span id="selTags"></span>
-      <button type="button" id="addTagBtn">+ Добавить хэштег</button>
-      <span class="taginput" id="tagInputWrap"><span>#</span><input type="text" id="tagInput" maxlength="30" placeholder="хэштег" aria-label="Новый хэштег" autocomplete="off"></span>
+      <button type="button" id="addTagBtn">+ Добавить хештег</button>
+      <span class="taginput" id="tagInputWrap"><span>#</span><input type="text" id="tagInput" maxlength="30" placeholder="хештег" aria-label="Новый хештег" autocomplete="off"></span>
     </div>
     <div id="tagSuggest"></div>
     <div class="sheet-foot">
@@ -581,7 +583,7 @@
   //   subtasks: [{ text: 'апельсин', done: true }, { text: 'арбуз', done: false }] }
   // subtasks (пункты) бывают только у задач.
   // due (срок) есть только у задач; пустая строка — срока нет.
-  // В старых версиях вместо tags было одно поле category — его переводим в хэштег.
+  // В старых версиях вместо tags было одно поле category — его переводим в хештег.
 
   var KEY = 'notes_tasks_v1';          // записи
   var SORT_KEY = 'notes_tasks_sort';   // выбранная сортировка
@@ -649,23 +651,23 @@
   var editId = null;       // id записи в окне (null — новая запись)
   var editType = 'note';   // что создаём в окне: заметку или задачу
   var editSubs = [];       // пункты задачи в открытом окне
-  // У каждой вкладки свои настройки: сортировка (запоминается), хэштег и поиск
+  // У каждой вкладки свои настройки: сортировка (запоминается), хештег и поиск
   var sortPref = { note: 'new', task: 'new' };
   var tabState = { note: { search: '', tag: '' }, task: { search: '', tag: '' } };
 
   function el(id) { return document.getElementById(id); }
 
-  // ====== ХЭШТЕГИ ======
-  // Готовые хэштеги, которые предлагаются, пока своих мало
+  // ====== ХЕШТЕГИ ======
+  // Готовые хештеги, которые предлагаются, пока своих мало
   var BASE_TAGS = ['учёба', 'работа', 'дом', 'спорт', 'покупки', 'идеи', 'важное', 'срочно',
     'личное', 'семья', 'друзья', 'здоровье', 'финансы', 'планы', 'цели', 'встречи',
     'праздники', 'подарки', 'путешествия', 'книги', 'фильмы', 'музыка', 'рецепты', 'хобби',
     'тренировки', 'экзамены', 'проекты', 'ссылки'];
   var BASE_SHOWN = 12;   // сколько базовых показывать, пока ничего не введено
-  var TAGS_KEY = 'notes_tasks_tags';   // хэштеги, которые человек вводил сам (запоминаются сразу)
+  var TAGS_KEY = 'notes_tasks_tags';   // хештеги, которые человек вводил сам (запоминаются сразу)
   var myTags = loadMyTags();
 
-  // Словарь «хэштег → значение» без встроенных свойств: иначе хэштеги #constructor и #__proto__ ломались
+  // Словарь «хештег → значение» без встроенных свойств: иначе хештеги #constructor и #__proto__ ломались
   function dict(o) {
     var m = Object.create(null);
     if (o && typeof o === 'object' && !Array.isArray(o)) Object.keys(o).forEach(function (k) { m[k] = o[k]; });
@@ -677,16 +679,16 @@
     try { return dict(JSON.parse(localStorage.getItem(TAGS_KEY))); } catch (e) { return dict(); }
   }
 
-  // Запоминаем хэштег сразу, даже если запись потом не сохранили
+  // Запоминаем хештег сразу, даже если запись потом не сохранили
   function rememberTag(t) {
     myTags[t] = Date.now();
     saveSetting(TAGS_KEY, JSON.stringify(myTags));
   }
-  var MAX_TAGS = 10;     // не больше 10 хэштегов у одной записи
-  var editTags = [];     // хэштеги записи в открытом окне
+  var MAX_TAGS = 10;     // не больше 10 хештегов у одной записи
+  var editTags = [];     // хештеги записи в открытом окне
   var tagInputOpen = false;
 
-  // Приводим хэштег к одному виду: без #, маленькими буквами, пробелы -> _
+  // Приводим хештег к одному виду: без #, маленькими буквами, пробелы -> _
   // Разрешены любые буквы и цифры (їжа, café), а ещё _ - + (c++)
   function cleanTag(s) {
     return String(s).trim().replace(/^#+/, '').toLowerCase()
@@ -694,7 +696,7 @@
       .replace(/[\uD800-\uDBFF]$/, '');   // не оставляем половинку редкого символа на обрезе
   }
 
-  // Запись из старой версии: категорию превращаем в хэштег
+  // Запись из старой версии: категорию превращаем в хештег
   // Запись годится, если у неё нормальный номер и понятный тип
   function validRecord(x) {
     return !!x && typeof x === 'object' && Number.isSafeInteger(x.id) && x.id > 0 &&
@@ -722,7 +724,7 @@
       x.tags = t ? [t] : [];
     }
     delete x.category;
-    // хэштеги из файла копии приводим к обычному виду, пустые и повторы убираем
+    // хештеги из файла копии приводим к обычному виду, пустые и повторы убираем
     x.tags = x.tags.map(function (t) { return typeof t === 'string' ? cleanTag(t) : ''; })
       .filter(function (t, i, all) { return t && all.indexOf(t) === i; });
     if (typeof x.text !== 'string') x.text = '';
@@ -743,8 +745,8 @@
     return x;
   }
 
-  // Цвет хэштега: каждый новый хэштег берёт следующий из 12 цветов (c0…c11)
-  // Цвет закрепляется за хэштегом навсегда и не меняется, когда записи удаляют
+  // Цвет хештега: каждый новый хештег берёт следующий из 12 цветов (c0…c11)
+  // Цвет закрепляется за хештегом навсегда и не меняется, когда записи удаляют
   var COLORS_KEY = 'notes_tasks_colors';
   var tagColors = null;
   function loadColors() {
@@ -784,7 +786,7 @@
     return order;
   }
 
-  // Хэштеги, которые уже использовались или вводились: сначала недавние
+  // Хештеги, которые уже использовались или вводились: сначала недавние
   function usedTags() {
     var last = dict();
     items.forEach(function (x) {
@@ -964,9 +966,9 @@
     if (i > 0) focusSub(i - 1); else el('title').focus();
   }
 
-  // --- хэштеги в окне ---
+  // --- хештеги в окне ---
 
-  // Показываем выбранные хэштеги, кнопку «Добавить» или поле ввода
+  // Показываем выбранные хештеги, кнопку «Добавить» или поле ввода
   function renderTagEditor() {
     el('selTags').innerHTML = editTags.map(function (t) {
       return '<span class="chip ' + tagColor(t) + '">#' + esc(t) + '<button type="button" data-rm="' + esc(t) + '" aria-label="Убрать #' + esc(t) + '">×</button></span>';
@@ -989,14 +991,14 @@
     var html = '';
 
     if (!q && el('tagInput').value.trim()) {
-      // ввели только знаки, которых в хэштеге быть не может
-      html = '<div class="hint">В хэштеге могут быть только буквы, цифры и знаки _ - +</div>';
+      // ввели только знаки, которых в хештеге быть не может
+      html = '<div class="hint">В хештеге могут быть только буквы, цифры и знаки _ - +</div>';
     } else if (!q) {
       var recent = usedTags().filter(free).slice(0, 10);
       var base = BASE_TAGS.filter(function (t) { return free(t) && recent.indexOf(t) === -1; }).slice(0, BASE_SHOWN);
       var inUse = dict();
       items.forEach(function (x) { x.tags.forEach(function (t) { inUse[t] = 1; }); });
-      // хэштег, которого нет ни в одной записи, можно убрать из подсказок крестиком
+      // хештег, которого нет ни в одной записи, можно убрать из подсказок крестиком
       if (recent.length) html += '<div class="group">Вы использовали</div><div class="opts">' + recent.map(function (t) {
         return inUse[t] ? btn(t, '#' + esc(t)) : btn(t, '#' + esc(t) + '<span class="forget" data-forget="' + esc(t) + '" title="Убрать из подсказок" aria-label="Убрать #' + esc(t) + ' из подсказок"></span>');
       }).join('') + '</div>';
@@ -1122,7 +1124,7 @@
   // Кнопка «Сохранить» (auto = false) или закрытие окна (auto = true: Esc, «Назад», нажатие мимо окна)
   function saveEditor(auto, fromHistory) {
     if (!el('editor').classList.contains('open')) return;   // окно уже закрыто (быстрый второй Enter) — второй раз не сохраняем
-    if (el('tagInput').value.trim()) addTag(el('tagInput').value);   // не забываем недописанный хэштег
+    if (el('tagInput').value.trim()) addTag(el('tagInput').value);   // не забываем недописанный хештег
     var d = editorData();
     if (auto) {
       // ничего не меняли — просто закрываем
@@ -1171,7 +1173,7 @@
     draftSaved = true;
   }
 
-  // Запись сохранили, но её не видно из-за поиска, хэштега или фильтра — говорим об этом и даём показать
+  // Запись сохранили, но её не видно из-за поиска, хештега или фильтра — говорим об этом и даём показать
   function tellIfHidden(id) {
     var x = findItem(id);
     if (!x || x.type !== tab) return;
@@ -1179,7 +1181,7 @@
     if (!matches(x)) {
       var why = [];
       if (el('search').value.trim()) why.push('поиск');
-      if (el('catFilter').value) why.push('хэштег #' + el('catFilter').value);
+      if (el('catFilter').value) why.push('хештег #' + el('catFilter').value);
       if (x.type === 'task' && taskFilter !== 'all') {
         var f = document.querySelector('#taskFilters [data-f="' + taskFilter + '"]');
         why.push('фильтр «' + (f ? f.firstChild.textContent.trim() : '') + '»');
@@ -1189,7 +1191,7 @@
       showToast('Задача выполнена и ушла в «Выполненные»', 'Показать', function () { showDone = true; saveSetting('notes_tasks_showdone', '1'); render(); flash(id); });
     }
   }
-  // Сбросить поиск, хэштег и фильтр и подсветить запись
+  // Сбросить поиск, хештег и фильтр и подсветить запись
   function showAll(id) {
     el('search').value = ''; tabState[tab].search = '';
     tabState[tab].tag = '';
@@ -1390,7 +1392,7 @@
   function hideToast() { el('toast').classList.remove('show'); }
 
   // ====== КОПИЯ ДАННЫХ ======
-  // Скачать: все записи, хэштеги и цвета в один файл .json
+  // Скачать: все записи, хештеги и цвета в один файл .json
   function exportData() {
     var data = { app: 'zadachi-i-zametki', version: 1, saved: new Date().toISOString(),
       items: items, tags: myTags, colors: tagColors || {}, trash: trash };
@@ -1530,7 +1532,7 @@
 
   // ====== 4. ОТБОР И СОРТИРОВКА ======
 
-  // Хэштеги записей открытой вкладки — для фильтра
+  // Хештеги записей открытой вкладки — для фильтра
   function updateCategories() {
     var mine = [];
     items.forEach(function (x) {
@@ -1540,10 +1542,10 @@
     mine.sort(function (a, b) { return a.localeCompare(b, 'ru'); });
 
     var chosen = tabState[tab].tag;
-    el('catFilter').innerHTML = '<option value="">Все хэштеги</option>' + mine.map(function (c) {
+    el('catFilter').innerHTML = '<option value="">Все хештеги</option>' + mine.map(function (c) {
       return '<option value="' + esc(c) + '">#' + esc(c) + '</option>';
     }).join('');
-    if (mine.indexOf(chosen) === -1) chosen = '';   // хэштег пропал (записи удалили) — сбрасываем
+    if (mine.indexOf(chosen) === -1) chosen = '';   // хештег пропал (записи удалили) — сбрасываем
     tabState[tab].tag = chosen;
     el('catFilter').value = chosen;
   }
@@ -1591,9 +1593,9 @@
 
   // ====== 5. ВЫВОД НА СТРАНИЦУ ======
 
-  // Хэштеги на карточке; нажатие на хэштег показывает все записи с ним
-  var TAGS_ON_CARD = 3;   // сколько хэштегов видно на карточке, остальные — «…»
-  var allTagsShown = dict();   // у каких записей нажали «…» и показали все хэштеги
+  // Хештеги на карточке; нажатие на хештег показывает все записи с ним
+  var TAGS_ON_CARD = 3;   // сколько хештегов видно на карточке, остальные — «…»
+  var allTagsShown = dict();   // у каких записей нажали «…» и показали все хештеги
   function tagsHtml(x) {
     var n = allTagsShown[x.id] ? x.tags.length : TAGS_ON_CARD;
     var html = x.tags.slice(0, n).map(function (t) {
@@ -1601,12 +1603,12 @@
     }).join('');
     if (x.tags.length > n) {
       var rest = x.tags.slice(n).map(function (t) { return '#' + t; }).join(' ');
-      html += '<span class="tag more" role="button" tabindex="0" title="' + esc(rest) + '" aria-label="Показать все хэштеги">…</span>';
+      html += '<span class="tag more" role="button" tabindex="0" title="' + esc(rest) + '" aria-label="Показать все хештеги">…</span>';
     }
     return html;
   }
 
-  // Цвет полосы карточки: по первому хэштегу, у записей без хэштегов — один общий серый
+  // Цвет полосы карточки: по первому хештегу, у записей без хештегов — один общий серый
   function stripe(x) {
     return x.tags.length ? ' ' + tagColor(x.tags[0]) : ' notag';
   }
@@ -1827,7 +1829,7 @@
   };
   el('addBtn').onclick = function () { openEditor(null); };
   el('searchClear').onclick = function () { el('search').value = ''; el('search').oninput(); el('search').focus(); };
-  // нажатие на строку фильтра снимает хэштег и поиск
+  // нажатие на строку фильтра снимает хештег и поиск
   el('filterBar').onclick = function () {
     el('search').value = ''; tabState[tab].search = ''; tabState[tab].tag = '';
     resetLimit();
@@ -1848,7 +1850,7 @@
       return;
     }
     var moreEl = e.target.closest('.tag.more');
-    if (moreEl) {   // «…» — показать все хэштеги этой записи (на телефоне подсказки при наведении нет)
+    if (moreEl) {   // «…» — показать все хештеги этой записи (на телефоне подсказки при наведении нет)
       allTagsShown[moreEl.closest('[data-id]').getAttribute('data-id')] = true;
       render();
       return;
@@ -2061,7 +2063,7 @@
   var downOn = null;
   document.addEventListener('mousedown', function (e) { downOn = e.target; }, true);
   el('editor').addEventListener('click', function (e) { if (e.target === el('editor') && downOn === el('editor') && !justOpened()) leaveEditor(); });
-  // нажатие на кнопки внизу окна не уводит курсор из поля хэштега: подсказки не сворачиваются и «Сохранить» не прыгает
+  // нажатие на кнопки внизу окна не уводит курсор из поля хештега: подсказки не сворачиваются и «Сохранить» не прыгает
   document.querySelector('#editor .sheet-foot').addEventListener('mousedown', function (e) {
     if (e.target.closest('button') && document.activeElement === el('tagInput')) e.preventDefault();
   });
@@ -2073,7 +2075,7 @@
   }
   el('text').addEventListener('input', fitText);
 
-  // хэштеги в окне
+  // хештеги в окне
   el('addTagBtn').onclick = openTagInput;
   el('tagInput').oninput = renderSuggest;
   el('tagInput').addEventListener('keydown', function (e) {
@@ -2085,7 +2087,7 @@
     } else if (e.key === 'Backspace' && !el('tagInput').value && editTags.length) {
       removeTag(editTags[editTags.length - 1]);
     } else if (e.key === 'Escape') {
-      e.stopPropagation();   // Esc закрывает только поле хэштега, а не всё окно
+      e.stopPropagation();   // Esc закрывает только поле хештега, а не всё окно
       closeTagInput();
       el('addTagBtn').focus();
     }
